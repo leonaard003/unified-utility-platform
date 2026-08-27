@@ -32,7 +32,7 @@ export default function HomePage() {
   return (
     <>
       <section className="card">
-        <h1>Unified Utility Platform</h1>
+        <h1>Utility Tools</h1>
         <p className="lede">
           A functionality-first MVP that groups transcript, downloader, converter, signature, and printing utilities into one modular app. Auto-deploy test marker: ready.
         </p>

@@ -4,7 +4,7 @@ import Nav from '@/components/Nav';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Unified Utility Platform',
+  title: 'Utility Tools',
   description:
     'Transcript, downloader, converter, signature and paper/printing tools in one modular app.',
 };
@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <header className="site-header">
           <div className="site-header-inner">
             <a className="brand" href="/">
-              Unified Utility Platform
+              Utility Tools
             </a>
             <Nav />
           </div>
