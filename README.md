@@ -62,6 +62,14 @@ Default Traefik host in the compose file:
 tools.aviroam.com
 ```
 
+The compose file also publishes the app directly on:
+
+```text
+http://SERVER_IP:3000
+```
+
+This is the fastest fallback when Traefik/domain routing is not ready yet.
+
 For Hostinger VPS + Docker Manager, follow `DEPLOY_HOSTINGER.md`.
 
 
