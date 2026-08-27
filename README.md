@@ -65,7 +65,7 @@ tools.aviroam.com
 The compose file also publishes the app directly on:
 
 ```text
-http://SERVER_IP:3000
+http://SERVER_IP:3100
 ```
 
 This is the fastest fallback when Traefik/domain routing is not ready yet.

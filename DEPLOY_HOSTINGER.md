@@ -10,7 +10,7 @@ Target domain: `tools.aviroam.com`
 ## What this app expects
 - Docker build support in Hostinger Docker Manager
 - Public DNS record for `tools.aviroam.com` pointing to this VPS
-- Port 3000 exposed publicly as a fallback (`http://SERVER_IP:3000`) unless you later front it with Traefik/Nginx
+- Port 3100 exposed publicly as a fallback (`http://SERVER_IP:3100`) unless you later front it with Traefik/Nginx
 
 ## Deploy steps
 1. Create DNS record for `tools.aviroam.com` -> this VPS IP.
