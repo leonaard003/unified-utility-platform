@@ -34,7 +34,7 @@ export default function HomePage() {
       <section className="card">
         <h1>Unified Utility Platform</h1>
         <p className="lede">
-          A functionality-first MVP that groups transcript, downloader, converter, signature, and printing utilities into one modular app.
+          A functionality-first MVP that groups transcript, downloader, converter, signature, and printing utilities into one modular app. Auto-deploy test marker: ready.
         </p>
         <p className="muted small">
           This build is intentionally honest: tools expose what works locally right now and clearly label anything blocked by missing dependencies or upstream platforms.
