@@ -109,41 +109,53 @@ function baseArgs(): string[] {
   return ['--no-playlist', '--no-warnings', '--no-progress', '--socket-timeout', '20', '--retries', '2'];
 }
 
-export async function probeMedia(detection: Detection): Promise<MediaInfo> {
+function maybeCookieArgs(cookiesText?: string): string[] {
+  return cookiesText && cookiesText.trim() ? ['--cookies', 'COOKIE_FILE_PLACEHOLDER'] : [];
+}
+
+export async function probeMedia(detection: Detection, options: { cookiesText?: string } = {}): Promise<MediaInfo> {
   const bin = await ytdlpBinary();
   const url = detection.canonicalUrl!;
-  const result = await run(bin, [...baseArgs(), '--dump-single-json', url], { timeoutMs: 60_000 });
+  return withWorkspace('probe', async (ws) => {
+    const args = [...baseArgs(), '--dump-single-json', url, ...maybeCookieArgs(options.cookiesText)];
+    if (options.cookiesText && options.cookiesText.trim()) {
+      const cookiePath = ws.file('cookies.txt');
+      await fs.writeFile(cookiePath, options.cookiesText, 'utf8');
+      args[args.indexOf('COOKIE_FILE_PLACEHOLDER')] = cookiePath;
+    }
+    const result = await run(bin, args, { timeoutMs: 60_000 });
 
-  if (result.code !== 0) {
-    logger.warn('downloader.probe_failed', { url, code: result.code, stderr: result.stderr.slice(0, 500) });
-    throw new AppError('UPSTREAM_BLOCKED', 'The extraction engine could not read that URL.', {
-      hint: firstUsefulLine(result.stderr) ?? 'The platform may have blocked the request, or the media may be private or removed.',
-    });
-  }
+    if (result.code !== 0) {
+      logger.warn('downloader.probe_failed', { url, code: result.code, stderr: result.stderr.slice(0, 500) });
+      throw new AppError('UPSTREAM_BLOCKED', 'The extraction engine could not read that URL.', {
+        hint: firstUsefulLine(result.stderr) ?? 'The platform may have blocked the request, or the media may be private or removed.',
+      });
+    }
 
-  let data: {
-    title?: string;
-    uploader?: string;
-    duration?: number;
-    thumbnail?: string;
-    is_live?: boolean;
-    formats?: RawFormat[];
-  };
-  try {
-    data = JSON.parse(result.stdout);
-  } catch {
-    throw new AppError('INTERNAL', 'The extraction engine returned output this app could not read.');
-  }
+    let data: {
+      title?: string;
+      uploader?: string;
+      duration?: number;
+      thumbnail?: string;
+      is_live?: boolean;
+      formats?: RawFormat[];
+    };
+    try {
+      data = JSON.parse(result.stdout);
+    } catch {
+      throw new AppError('INTERNAL', 'The extraction engine returned output this app could not read.');
+    }
 
-  const formats = (data.formats ?? []).map(toFormat).filter((f): f is MediaFormat => f !== null);
-  return {
-    title: data.title ?? 'Untitled',
-    uploader: data.uploader,
-    durationSeconds: data.duration,
-    thumbnail: data.thumbnail,
-    isLive: Boolean(data.is_live),
-    formats,
-  };
+    const formats = (data.formats ?? []).map(toFormat).filter((f): f is MediaFormat => f !== null);
+    return {
+      title: data.title ?? 'Untitled',
+      uploader: data.uploader,
+      durationSeconds: data.duration,
+      thumbnail: data.thumbnail,
+      isLive: Boolean(data.is_live),
+      formats,
+    };
+  });
 }
 
 export type DownloadMode = 'video' | 'audio';
@@ -169,7 +181,7 @@ const CONTENT_TYPES: Record<string, string> = {
 
 export async function downloadMedia(
   detection: Detection,
-  options: { mode: DownloadMode; formatId?: string },
+  options: { mode: DownloadMode; formatId?: string; cookiesText?: string },
 ): Promise<DownloadResult> {
   const bin = await ytdlpBinary();
   const { ffmpegAvailable } = await engineStatus();
@@ -178,6 +190,12 @@ export async function downloadMedia(
   return withWorkspace('download', async (ws) => {
     const template = path.join(ws.dir, 'media.%(ext)s');
     const args = [...baseArgs(), '-o', template];
+
+    if (options.cookiesText && options.cookiesText.trim()) {
+      const cookiePath = ws.file('cookies.txt');
+      await fs.writeFile(cookiePath, options.cookiesText, 'utf8');
+      args.push('--cookies', cookiePath);
+    }
 
     if (options.formatId) {
       args.push('-f', options.formatId);

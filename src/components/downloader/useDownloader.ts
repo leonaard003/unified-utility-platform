@@ -37,6 +37,7 @@ export function useDownloader() {
   const [probing, setProbing] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<DownloaderError | null>(null);
+  const [cookiesText, setCookiesText] = useState('');
 
   useEffect(() => {
     void (async () => {
@@ -58,7 +59,7 @@ export function useDownloader() {
       const response = await fetch('/api/downloader/probe', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, cookiesText: cookiesText || undefined }),
       });
       if (!response.ok) {
         setError(await readError(response, 'Could not check that URL.'));
@@ -73,7 +74,7 @@ export function useDownloader() {
     } finally {
       setProbing(false);
     }
-  }, []);
+  }, [cookiesText]);
 
   const download = useCallback(async (options: { url: string; mode: DownloadMode; formatId?: string }) => {
     setDownloading(true);
@@ -82,7 +83,7 @@ export function useDownloader() {
       const response = await fetch('/api/downloader/download', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ url: options.url, mode: options.mode, formatId: options.formatId || undefined }),
+        body: JSON.stringify({ url: options.url, mode: options.mode, formatId: options.formatId || undefined, cookiesText: cookiesText || undefined }),
       });
       if (!response.ok) {
         setError(await readError(response, 'Download failed.'));
@@ -103,7 +104,7 @@ export function useDownloader() {
     } finally {
       setDownloading(false);
     }
-  }, []);
+  }, [cookiesText]);
 
   const reset = useCallback(() => {
     setResult(null);
@@ -123,6 +124,8 @@ export function useDownloader() {
     downloading,
     error,
     formats,
+    cookiesText,
+    setCookiesText,
     canDownload: Boolean(result?.detection?.matched && result.engine.available),
     probe,
     download,

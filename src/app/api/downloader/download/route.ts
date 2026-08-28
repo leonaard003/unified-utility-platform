@@ -14,7 +14,8 @@ export async function POST(req: Request) {
       throw new Error(detection.reason);
     }
     const mode = requireOneOf(body.mode ?? 'video', ['video', 'audio'] as const, 'download mode');
-    const result = await downloadMedia(detection, { mode, formatId: typeof body.formatId === 'string' && body.formatId ? body.formatId : undefined });
+    const cookiesText = typeof body.cookiesText === 'string' ? body.cookiesText : undefined;
+    const result = await downloadMedia(detection, { mode, formatId: typeof body.formatId === 'string' && body.formatId ? body.formatId : undefined, cookiesText });
     return fileResponse(result.bytes, result.filename, result.contentType);
   } catch (err) {
     if (err instanceof Error && !('code' in err)) {

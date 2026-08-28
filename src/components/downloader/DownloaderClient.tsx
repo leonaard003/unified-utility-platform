@@ -17,7 +17,7 @@ export default function DownloaderClient() {
 
       <Banner tone="info" title="Transcript and download now live on one page">
         <div className="hint">
-          <Link href="/tools/transcript">Transcript &amp; download</Link> handles both flows from a single URL field. This page still works for download-only use.
+          <Link href="/tools/transcript">Video Transcript</Link> now handles both flows from a single URL field. This page still works as a fallback download-only view.
         </div>
       </Banner>
 

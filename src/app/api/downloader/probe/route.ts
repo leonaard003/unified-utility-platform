@@ -21,6 +21,7 @@ export async function POST(req: Request) {
   const parsed = parseHttpUrl(body.url, 'media URL');
   const detection = detectPlatform(parsed);
   const engine = await engineStatus();
+  const cookiesText = typeof body.cookiesText === 'string' ? body.cookiesText : undefined;
 
   const response: any = {
     engine,
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
 
   if (detection.matched && engine.available) {
     try {
-      response.media = await probeMedia(detection);
+      response.media = await probeMedia(detection, { cookiesText });
     } catch (err) {
       if (err instanceof AppError) {
         response.probeError = { message: err.message, hint: err.hint };
