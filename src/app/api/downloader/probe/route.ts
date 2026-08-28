@@ -3,11 +3,13 @@ import { getCapabilities } from '@/lib/capabilities';
 import { enforceRateLimit, RULES } from '@/lib/ratelimit';
 import { parseHttpUrl } from '@/lib/validate';
 import { detectPlatform, describePlatform } from '@/modules/downloader/platforms';
+import { engineStatus } from '@/modules/downloader/engine';
 import { providerReport, routeMediaInfo } from '@/modules/providers/router';
 import { AppError } from '@/lib/errors';
 
 export async function GET() {
   return json({
+    engine: await engineStatus(),
     capabilities: await getCapabilities(),
     providers: providerReport(),
     platforms: [
@@ -25,8 +27,10 @@ export async function POST(req: Request) {
   const parsed = parseHttpUrl(body.url, 'media URL');
   const detection = detectPlatform(parsed);
   const cookiesText = typeof body.cookiesText === 'string' ? body.cookiesText : undefined;
+  const engine = await engineStatus();
 
   const response: any = {
+    engine,
     providers: providerReport(),
     platforms: detection.platform ? [describePlatform(detection.platform)] : [],
     detection: detection.platform ? { ...detection, platform: describePlatform(detection.platform) } : detection,
@@ -38,11 +42,9 @@ export async function POST(req: Request) {
       response.media = routed.value;
       response.providerSource = routed.provider;
       response.providerAttempts = routed.attempts;
-      response.engine = {
-        available: true,
-        version: routed.provider,
-        ffmpegAvailable: true,
-        installHint: 'Provider layer routed this request successfully.',
+      response.providerEngine = {
+        provider: routed.provider,
+        hint: 'Provider layer routed this request successfully.',
       };
     } catch (err) {
       if (err instanceof AppError) {
