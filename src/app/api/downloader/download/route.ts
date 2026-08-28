@@ -2,7 +2,7 @@ import { errorResponse, fileResponse } from '@/lib/http';
 import { enforceRateLimit, RULES } from '@/lib/ratelimit';
 import { parseHttpUrl, requireOneOf } from '@/lib/validate';
 import { detectPlatform } from '@/modules/downloader/platforms';
-import { downloadMedia } from '@/modules/downloader/engine';
+import { routeDownload } from '@/modules/providers/router';
 
 export async function POST(req: Request) {
   try {
@@ -15,8 +15,12 @@ export async function POST(req: Request) {
     }
     const mode = requireOneOf(body.mode ?? 'video', ['video', 'audio'] as const, 'download mode');
     const cookiesText = typeof body.cookiesText === 'string' ? body.cookiesText : undefined;
-    const result = await downloadMedia(detection, { mode, formatId: typeof body.formatId === 'string' && body.formatId ? body.formatId : undefined, cookiesText });
-    return fileResponse(result.bytes, result.filename, result.contentType);
+    const routed = await routeDownload(detection, {
+      mode,
+      formatId: typeof body.formatId === 'string' && body.formatId ? body.formatId : undefined,
+      cookiesText,
+    });
+    return fileResponse(routed.value.bytes, routed.value.filename, routed.value.contentType);
   } catch (err) {
     if (err instanceof Error && !('code' in err)) {
       return Response.json({ error: { code: 'INVALID_INPUT', message: err.message } }, { status: 400 });

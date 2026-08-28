@@ -9,8 +9,8 @@ Functionality-first MVP for a single web app that groups:
 
 ## What is real in this build
 
-- **Transcript:** live multi-platform video transcription for public YouTube, Instagram, TikTok, and X/Twitter URLs by downloading media, extracting audio, and transcribing it locally with faster-whisper; demo mode remains available for UI testing.
-- **Downloader:** real platform detection and capability disclosure; actual downloads work only when `yt-dlp` is installed. In this environment, that dependency may be missing.
+- **Transcript:** live multi-platform video transcription for public YouTube, Instagram, TikTok, and X/Twitter URLs by downloading media, extracting audio, and transcribing it locally with faster-whisper. When APIFY_TOKEN is configured, the provider router can try external transcript providers before falling back locally; demo mode remains available for UI testing.
+- **Downloader:** real platform detection and capability disclosure, now routed through a provider abstraction layer. With APIFY_TOKEN configured, external providers can supply metadata, quality options, and downloads before the local yt-dlp fallback is used.
 - **Converter:** real image conversion, PDF text extraction, DOCX text/HTML/PDF fallback conversion, and ffmpeg-backed audio/video conversion when `ffmpeg` is installed.
 - **Signature:** real in-browser drawing/typing and PNG export.
 - **Paper calculator:** real area, fit, and simple cost math.
@@ -20,6 +20,7 @@ Functionality-first MVP for a single web app that groups:
 - Next.js 15 + TypeScript
 - Bundled libs: `sharp`, `pdf-lib`, `mammoth`, `unpdf`
 - Optional native deps: `ffmpeg`, `yt-dlp`, `LibreOffice`
+- Optional external provider layer: Apify actor integrations for transcript/download/metadata
 - Python STT runtime: `faster-whisper`
 
 ## Project location
@@ -74,6 +75,28 @@ This is the fastest fallback when Traefik/domain routing is not ready yet.
 For Hostinger VPS + Docker Manager, follow `DEPLOY_HOSTINGER.md`.
 
 
+### Provider layer (optional)
+When `APIFY_TOKEN` is configured, the app can try external providers before the local fallback pipeline.
+
+Primary providers currently wired:
+- transcript: `agentx/video-transcript`
+- download: `agentx/all-video-scraper`
+- metadata/quality: `scrapearchitect/youtube-video-formats-scraper`
+
+Key env vars:
+
+```bash
+APIFY_TOKEN=...
+UUP_PROVIDER_MODE=hybrid
+UUP_TRANSCRIPT_PROVIDER_PRIMARY=agentx/video-transcript
+UUP_DOWNLOAD_PROVIDER_PRIMARY=agentx/all-video-scraper
+UUP_METADATA_PROVIDER_PRIMARY=scrapearchitect/youtube-video-formats-scraper
+```
+
+Provider planning docs live in:
+- `docs/provider-integration-plan.md`
+- `docs/provider-priority-matrix.md`
+
 ## Optional dependencies
 
 ### yt-dlp
@@ -107,3 +130,4 @@ sudo apt install libreoffice-writer
 - Uploaded/generated files are temporary.
 - Downloader behavior depends on upstream platform restrictions.
 - Signature export is a utility feature, not a legal-certification feature.
+- Provider planning docs for future multi-provider transcript/download fallbacks live under `docs/`.
