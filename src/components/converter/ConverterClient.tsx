@@ -76,7 +76,7 @@ export default function ConverterClient() {
   return (
     <div className="card">
       <h1>Converter</h1>
-      <p className="lede">This module only offers conversions that are actually implemented. Image and document utilities work with bundled dependencies; audio/video conversions require ffmpeg.</p>
+      <p className="lede">This module only offers conversions that are actually implemented. Image targets now include JPG, PNG, WEBP, AVIF, GIF, TIFF, BMP, ICO, plus PDF export. Image and document utilities work with bundled dependencies; some formats use ffmpeg.</p>
 
       <form onSubmit={onSubmit}>
         <div className="field">

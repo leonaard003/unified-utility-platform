@@ -21,7 +21,7 @@ export interface ConversionOutput {
   notes: string[];
 }
 
-export type RasterTarget = 'jpeg' | 'png' | 'webp' | 'avif';
+export type RasterTarget = 'jpeg' | 'png' | 'webp' | 'avif' | 'gif' | 'tiff';
 
 async function readMetadata(bytes: Buffer) {
   try {
@@ -75,6 +75,13 @@ export async function convertImage(
       break;
     case 'avif':
       pipeline = pipeline.avif({ quality });
+      break;
+    case 'gif':
+      pipeline = pipeline.gif();
+      notes.push('GIF export keeps only the first frame when the source is animated.');
+      break;
+    case 'tiff':
+      pipeline = pipeline.tiff({ quality, compression: 'lzw' });
       break;
   }
 

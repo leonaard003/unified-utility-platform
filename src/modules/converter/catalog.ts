@@ -17,6 +17,10 @@ export type TargetId =
   | 'png'
   | 'webp'
   | 'avif'
+  | 'gif'
+  | 'tiff'
+  | 'bmp'
+  | 'ico'
   | 'pdf'
   | 'txt'
   | 'html'
@@ -100,6 +104,56 @@ export const CONVERSIONS: ConversionSpec[] = [
     engine: 'sharp',
     options: ['width', 'height', 'quality'],
     notes: ['Smallest files, but encoding is noticeably slower than JPG or WebP.'],
+  },
+  {
+    id: 'image:gif',
+    category: 'image',
+    from: RASTER_INPUTS,
+    target: 'gif',
+    label: 'GIF image',
+    outExt: 'gif',
+    mime: 'image/gif',
+    engine: 'sharp',
+    options: ['width', 'height'],
+    notes: ['Static export. Animated inputs are flattened to the first frame in this build.'],
+  },
+  {
+    id: 'image:tiff',
+    category: 'image',
+    from: RASTER_INPUTS,
+    target: 'tiff',
+    label: 'TIFF image',
+    outExt: 'tiff',
+    mime: 'image/tiff',
+    engine: 'sharp',
+    options: ['width', 'height', 'quality'],
+    notes: ['Good for print workflows and lossless archival.'],
+  },
+  {
+    id: 'image:bmp',
+    category: 'image',
+    from: RASTER_INPUTS,
+    target: 'bmp',
+    label: 'BMP image',
+    outExt: 'bmp',
+    mime: 'image/bmp',
+    engine: 'ffmpeg',
+    requires: 'ffmpeg',
+    options: [],
+    notes: ['Uncompressed bitmap export via ffmpeg.'],
+  },
+  {
+    id: 'image:ico',
+    category: 'image',
+    from: RASTER_INPUTS,
+    target: 'ico',
+    label: 'ICO icon',
+    outExt: 'ico',
+    mime: 'image/x-icon',
+    engine: 'ffmpeg',
+    requires: 'ffmpeg',
+    options: [],
+    notes: ['Outputs a single 256×256 icon file suited for favicon/app-icon use.'],
   },
   {
     id: 'image:pdf',

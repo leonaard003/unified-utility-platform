@@ -3,6 +3,7 @@ import { getCapabilities, requireBinary } from '@/lib/capabilities';
 import { enforceRateLimit, RULES } from '@/lib/ratelimit';
 import { extensionOf as extFromName, readUpload, replaceExtension, requireString } from '@/lib/validate';
 import { findConversion } from '@/modules/converter/catalog';
+import { convertFfmpegImage } from '@/modules/converter/ffmpeg-image';
 import { convertMedia } from '@/modules/converter/media';
 import { convertImage, imageToPdf } from '@/modules/converter/image';
 import { docxToHtml, docxToPdf, docxToText, pdfToMarkdown, pdfToText, textToPdf } from '@/modules/converter/document';
@@ -40,11 +41,17 @@ export async function POST(req: Request) {
       case 'image:png':
       case 'image:webp':
       case 'image:avif':
-        output = await convertImage(upload.bytes, spec.target as 'jpeg' | 'png' | 'webp' | 'avif', {
+      case 'image:gif':
+      case 'image:tiff':
+        output = await convertImage(upload.bytes, spec.target as 'jpeg' | 'png' | 'webp' | 'avif' | 'gif' | 'tiff', {
           width: intField(form, 'width'),
           height: intField(form, 'height'),
           quality: intField(form, 'quality'),
         });
+        break;
+      case 'image:bmp':
+      case 'image:ico':
+        output = await convertFfmpegImage(upload.bytes, upload.name, spec.target as 'bmp' | 'ico');
         break;
       case 'image:pdf':
         output = await imageToPdf(upload.bytes, { pageSize: (form.get('pageSize') as 'a4' | 'letter' | 'fit' | null) || 'a4' });
