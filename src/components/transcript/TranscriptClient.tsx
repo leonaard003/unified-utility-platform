@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import Banner from '@/components/Banner';
+import DownloadPanel from '@/components/downloader/DownloadPanel';
+import { useDownloader } from '@/components/downloader/useDownloader';
 
 type TranscriptResponse = {
   videoId: string;
@@ -22,6 +24,8 @@ type TranscriptResponse = {
   engine?: string;
 };
 
+type Flow = 'transcript' | 'download';
+
 function download(name: string, mime: string, text: string) {
   const blob = new Blob([text], { type: mime });
   const url = URL.createObjectURL(blob);
@@ -34,12 +38,14 @@ function download(name: string, mime: string, text: string) {
 
 export default function TranscriptClient() {
   const [url, setUrl] = useState('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+  const [flow, setFlow] = useState<Flow | null>(null);
   const [mode, setMode] = useState<'live' | 'demo'>('live');
   const [language, setLanguage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
   const [result, setResult] = useState<TranscriptResponse | null>(null);
+  const downloader = useDownloader();
 
   const filenameBase = useMemo(() => (result?.title || result?.videoId || 'transcript').replace(/[^\w.-]+/g, '_'), [result]);
 
@@ -72,35 +78,55 @@ export default function TranscriptClient() {
   return (
     <div className="card">
       <h1>Video Transcript</h1>
-      <p className="lede">Paste a public video URL from YouTube, Instagram, TikTok, or X/Twitter. This tool transcribes the audio directly for more consistent cross-platform results.</p>
+      <p className="lede">Paste one public video URL from YouTube, Instagram, TikTok, or X/Twitter, then choose whether you want a transcript of it or the media file itself.</p>
 
-      <Banner tone="info" title="How this works">
-        <div className="hint">
-          Live mode downloads the public media, extracts audio, and transcribes it. It is slower than caption fetch and may fail on private, blocked, or login-required posts. Demo mode still exists to test the viewer/export flow.
-        </div>
-      </Banner>
+      <div className="field">
+        <label htmlFor="video-url">Public video URL</label>
+        <input id="video-url" type="url" value={url} onChange={(e) => setUrl(e.target.value)} required />
+        <p className="hint">Supported now: YouTube, Instagram, TikTok, X/Twitter public video URLs.</p>
+      </div>
 
-      <form onSubmit={onSubmit}>
-        <div className="field">
-          <label htmlFor="video-url">Public video URL</label>
-          <input id="video-url" type="url" value={url} onChange={(e) => setUrl(e.target.value)} required />
-          <p className="hint">Supported now: YouTube, Instagram, TikTok, X/Twitter public video URLs.</p>
+      <div className="field">
+        <span className="field-label" id="flow-label">What do you want to do?</span>
+        <div className="action-choice" role="group" aria-labelledby="flow-label">
+          <button type="button" className={flow === 'transcript' ? 'primary' : ''} aria-pressed={flow === 'transcript'} onClick={() => setFlow('transcript')}>
+            Get transcript
+          </button>
+          <button type="button" className={flow === 'download' ? 'primary' : ''} aria-pressed={flow === 'download'} onClick={() => setFlow('download')}>
+            Download video
+          </button>
         </div>
-        <div className="field">
-          <label htmlFor="mode">Mode</label>
-          <select id="mode" value={mode} onChange={(e) => setMode(e.target.value as 'live' | 'demo')}>
-            <option value="live">Live transcription</option>
-            <option value="demo">Demo transcript</option>
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="lang">Language hint (optional)</label>
-          <input id="lang" type="text" value={language} onChange={(e) => setLanguage(e.target.value)} placeholder="en, id, en-US" />
-        </div>
-        <button type="submit" disabled={loading}>{loading ? 'Transcribing…' : 'Get transcript'}</button>
-      </form>
+        {flow === null ? <p className="hint">Pick one to see its options. You can switch at any time — the URL above stays.</p> : null}
+      </div>
 
-      {error ? <Banner tone="error" title={error}>{hint ? <div className="hint">{hint}</div> : null}</Banner> : null}
+      {flow === 'transcript' ? (
+        <>
+          <Banner tone="info" title="How transcription works">
+            <div className="hint">
+              Live mode downloads the public media, extracts audio, and transcribes it. It is slower than caption fetch and may fail on private, blocked, or login-required posts. Demo mode still exists to test the viewer/export flow.
+            </div>
+          </Banner>
+
+          <form onSubmit={onSubmit}>
+            <div className="field">
+              <label htmlFor="mode">Mode</label>
+              <select id="mode" value={mode} onChange={(e) => setMode(e.target.value as 'live' | 'demo')}>
+                <option value="live">Live transcription</option>
+                <option value="demo">Demo transcript</option>
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="lang">Language hint (optional)</label>
+              <input id="lang" type="text" value={language} onChange={(e) => setLanguage(e.target.value)} placeholder="en, id, en-US" />
+            </div>
+            <button type="submit" className="primary" disabled={loading}>{loading ? 'Transcribing…' : 'Start transcription'}</button>
+          </form>
+
+          {error ? <Banner tone="error" title={error}>{hint ? <div className="hint">{hint}</div> : null}</Banner> : null}
+        </>
+      ) : null}
+
+      {flow === 'download' ? <DownloadPanel url={url} downloader={downloader} /> : null}
 
       {result ? (
         <div className="card" style={{ marginTop: '1rem' }}>

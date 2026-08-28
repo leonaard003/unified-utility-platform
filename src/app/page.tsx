@@ -3,13 +3,8 @@ import ToolCard from '@/components/ToolCard';
 const TOOLS = [
   {
     href: '/tools/transcript',
-    title: 'YouTube Transcript',
-    description: 'Paste a YouTube URL, fetch captions when available, or use demo mode to test exports.',
-  },
-  {
-    href: '/tools/downloader',
-    title: 'Downloader',
-    description: 'Check support for YouTube, X, Instagram, and TikTok, then download when the extraction engine is available.',
+    title: 'Video Transcript',
+    description: 'Paste one public video URL, then choose transcript or download from the same page.',
   },
   {
     href: '/tools/converter',
@@ -34,7 +29,7 @@ export default function HomePage() {
       <section className="card">
         <h1>Utility Tools</h1>
         <p className="lede">
-          A functionality-first MVP that groups transcript, downloader, converter, signature, and printing utilities into one modular app. Auto-deploy test marker: ready.
+          A functionality-first MVP that groups transcript, download, converter, signature, and printing utilities into one modular app. Auto-deploy test marker: ready.
         </p>
         <p className="muted small">
           This build is intentionally honest: tools expose what works locally right now and clearly label anything blocked by missing dependencies or upstream platforms.

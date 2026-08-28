@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 export const NAV_LINKS = [
   { href: '/', label: 'Home' },
   { href: '/tools/transcript', label: 'Transcript' },
-  { href: '/tools/downloader', label: 'Downloader' },
   { href: '/tools/converter', label: 'Converter' },
   { href: '/tools/signature', label: 'Signature' },
   { href: '/tools/paper-calculator', label: 'Paper & Printing' },
