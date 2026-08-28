@@ -101,25 +101,31 @@ export default function TranscriptClient() {
 
       {flow === 'transcript' ? (
         <>
-          <Banner tone="info" title="How transcription works">
+          <Banner tone="info" title="Transcript">
             <div className="hint">
-              Live mode downloads the public media, extracts audio, and transcribes it. It is slower than caption fetch and may fail on private, blocked, or login-required posts. Demo mode still exists to test the viewer/export flow.
+              Klik sekali untuk ambil transcript. Kalau video diblok platform, nanti error akan dijelaskan langsung.
             </div>
           </Banner>
 
           <form onSubmit={onSubmit}>
-            <div className="field">
-              <label htmlFor="mode">Mode</label>
-              <select id="mode" value={mode} onChange={(e) => setMode(e.target.value as 'live' | 'demo')}>
-                <option value="live">Live transcription</option>
-                <option value="demo">Demo transcript</option>
-              </select>
+            <div className="button-row">
+              <button type="submit" className="primary" disabled={loading}>{loading ? 'Processing…' : 'Get transcript'}</button>
             </div>
-            <div className="field">
-              <label htmlFor="lang">Language hint (optional)</label>
-              <input id="lang" type="text" value={language} onChange={(e) => setLanguage(e.target.value)} placeholder="en, id, en-US" />
-            </div>
-            <button type="submit" className="primary" disabled={loading}>{loading ? 'Transcribing…' : 'Start transcription'}</button>
+
+            <details className="card" style={{ marginTop: '1rem' }}>
+              <summary><strong>Advanced transcript options</strong></summary>
+              <div className="field" style={{ marginTop: '1rem' }}>
+                <label htmlFor="mode">Mode</label>
+                <select id="mode" value={mode} onChange={(e) => setMode(e.target.value as 'live' | 'demo')}>
+                  <option value="live">Live transcription</option>
+                  <option value="demo">Demo transcript</option>
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="lang">Language hint (optional)</label>
+                <input id="lang" type="text" value={language} onChange={(e) => setLanguage(e.target.value)} placeholder="en, id, en-US" />
+              </div>
+            </details>
           </form>
 
           {error ? <Banner tone="error" title={error}>{hint ? <div className="hint">{hint}</div> : null}</Banner> : null}

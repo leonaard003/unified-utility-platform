@@ -169,18 +169,27 @@ export async function routeTranscript(
       source: 'local',
       skip: detection.matched ? undefined : detection.reason || 'The URL is not one the local pipeline can fetch.',
       run: async () => {
-        const source = await fetchTranscriptSource(detection.canonicalUrl ?? url);
-        const asr = await transcribeAudio(source.audioBytes, source.audioFilename, options.languageHint);
-        return {
-          segments: asr.segments as TranscriptSegment[],
-          title: source.title,
-          platform: source.platform,
-          sourceUrl: source.canonicalUrl,
-          language: asr.language,
-          hasTimings: true,
-          engine: `faster-whisper:${asr.model}`,
-          provenance: [...source.provenance, `Transcribed locally with faster-whisper model ${asr.model}.`],
-        } satisfies RoutedTranscript;
+        try {
+          const source = await fetchTranscriptSource(detection.canonicalUrl ?? url);
+          const asr = await transcribeAudio(source.audioBytes, source.audioFilename, options.languageHint);
+          return {
+            segments: asr.segments as TranscriptSegment[],
+            title: source.title,
+            platform: source.platform,
+            sourceUrl: source.canonicalUrl,
+            language: asr.language,
+            hasTimings: true,
+            engine: `faster-whisper:${asr.model}`,
+            provenance: [...source.provenance, `Transcribed locally with faster-whisper model ${asr.model}.`],
+          } satisfies RoutedTranscript;
+        } catch (err) {
+          if (err instanceof AppError && err.code === 'UPSTREAM_BLOCKED') {
+            throw new AppError('UPSTREAM_BLOCKED', 'Transcript could not be generated for this video from the current server.', {
+              hint: [err.hint, 'This usually means the source platform blocked media access, so no audio could be fetched for transcription.'].filter(Boolean).join(' '),
+            });
+          }
+          throw err;
+        }
       },
     });
   }

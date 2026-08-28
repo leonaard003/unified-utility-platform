@@ -38,65 +38,16 @@ export default function DownloadPanel({ url, downloader }: Props) {
   return (
     <>
       {current ? (
-        <Banner tone={current.engine.available ? 'ok' : 'warn'} title={current.engine.available ? 'Extraction engine available' : 'Extraction engine missing'}>
+        <Banner tone={current.engine.available ? 'ok' : 'warn'} title={current.engine.available ? 'Download engine ready' : 'Download engine missing'}>
           <div className="hint">
-            {current.engine.available ? `yt-dlp is installed${current.engine.version ? ` (${current.engine.version})` : ''}.` : current.engine.installHint}
+            {current.engine.available ? `yt-dlp ready${current.engine.version ? ` (${current.engine.version})` : ''}.` : current.engine.installHint}
           </div>
         </Banner>
       ) : null}
 
-      <Banner tone="info" title="Download flow">
-        <div className="hint">
-          Click <strong>Check URL</strong> first. Quality and format options appear after the URL probe succeeds. If YouTube says “Sign in to confirm you’re not a bot”, you can paste exported cookies below and probe again.
-        </div>
-      </Banner>
-
       <div className="button-row">
         <button type="button" className="primary" disabled={!url.trim() || probing} onClick={() => void probe(url)}>
-          {probing ? 'Checking…' : 'Check URL'}
-        </button>
-      </div>
-
-      <div className="field" style={{ marginTop: '1rem' }}>
-        <label htmlFor="cookies-text">Cookies (optional, advanced)</label>
-        <textarea
-          id="cookies-text"
-          rows={6}
-          value={cookiesText}
-          onChange={(e) => setCookiesText(e.target.value)}
-          placeholder={'Paste Netscape-format cookies here only if a platform asks you to sign in. Example first line: # Netscape HTTP Cookie File'}
-        />
-        <p className="hint">Only needed for blocked videos. The cookies are sent only with this request flow and are not shown back in results.</p>
-      </div>
-
-      <div className="card" style={{ marginTop: '1rem' }}>
-        <h2>Download options</h2>
-        <div className="field">
-          <label htmlFor="dl-mode">Download mode</label>
-          <select id="dl-mode" value={mode} onChange={(e) => setMode(e.target.value as DownloadMode)} disabled={!qualityReady}>
-            <option value="video">Video</option>
-            <option value="audio">Audio only</option>
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="format-id">Quality / format</label>
-          <select id="format-id" value={formatId} onChange={(e) => setFormatId(e.target.value)} disabled={!qualityReady}>
-            <option value="">{qualityReady ? 'Best automatic choice' : 'Run Check URL first'}</option>
-            {formats.map((format) => (
-              <option key={format.id} value={format.id}>{format.label}</option>
-            ))}
-          </select>
-          <p className="hint">{qualityReady ? 'Audio-only downloads ignore video-specific formats.' : 'Quality choices appear here after a successful probe.'}</p>
-        </div>
-        <button
-          type="button"
-          className="primary"
-          disabled={!canDownload || !canonicalUrl || !qualityReady || downloading}
-          onClick={() => {
-            if (canonicalUrl) void download({ url: canonicalUrl, mode, formatId });
-          }}
-        >
-          {downloading ? 'Downloading…' : 'Download now'}
+          {probing ? 'Preparing…' : 'Download'}
         </button>
       </div>
 
@@ -106,44 +57,74 @@ export default function DownloadPanel({ url, downloader }: Props) {
         </Banner>
       ) : null}
 
-      {result?.detection ? (
+      <div className="card" style={{ marginTop: '1rem' }}>
+        <h2>Download</h2>
+        <div className="field">
+          <label htmlFor="dl-mode">Mode</label>
+          <select id="dl-mode" value={mode} onChange={(e) => setMode(e.target.value as DownloadMode)} disabled={!qualityReady}>
+            <option value="video">Video</option>
+            <option value="audio">Audio only</option>
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="format-id">Quality</label>
+          <select id="format-id" value={formatId} onChange={(e) => setFormatId(e.target.value)} disabled={!qualityReady}>
+            <option value="">{qualityReady ? 'Best automatic choice' : 'Click Download first'}</option>
+            {formats.map((format) => (
+              <option key={format.id} value={format.id}>{format.label}</option>
+            ))}
+          </select>
+          <p className="hint">{qualityReady ? 'Choose a quality if available, or leave automatic.' : 'After the link is checked, quality options will show here.'}</p>
+        </div>
+        <button
+          type="button"
+          className="primary"
+          disabled={!canDownload || !canonicalUrl || !qualityReady || downloading}
+          onClick={() => {
+            if (canonicalUrl) void download({ url: canonicalUrl, mode, formatId });
+          }}
+        >
+          {downloading ? 'Downloading…' : 'Start download'}
+        </button>
+      </div>
+
+      {result?.media ? (
         <div className="card" style={{ marginTop: '1rem' }}>
-          <h2>Detection</h2>
-          <p>{result.detection.reason}</p>
-          {result.detection.platform ? (
+          <h2>{result.media.title || 'Media found'}</h2>
+          <ul>
+            {result.media.uploader ? <li><strong>Uploader:</strong> {result.media.uploader}</li> : null}
+            {typeof result.media.durationSeconds === 'number' ? <li><strong>Duration:</strong> {result.media.durationSeconds}s</li> : null}
+            <li><strong>Available qualities:</strong> {formats.length}</li>
+          </ul>
+        </div>
+      ) : null}
+
+      <details className="card" style={{ marginTop: '1rem' }}>
+        <summary><strong>Advanced / blocked video help</strong></summary>
+        <div style={{ marginTop: '1rem' }}>
+          <p className="hint">If a platform says “Sign in to confirm you’re not a bot”, paste Netscape-format cookies here and click Download again.</p>
+          <div className="field">
+            <label htmlFor="cookies-text">Cookies</label>
+            <textarea
+              id="cookies-text"
+              rows={6}
+              value={cookiesText}
+              onChange={(e) => setCookiesText(e.target.value)}
+              placeholder={'Example first line: # Netscape HTTP Cookie File'}
+            />
+          </div>
+          {result?.detection ? (
             <>
               <p className="small muted">Canonical URL: {result.detection.canonicalUrl}</p>
-              <h3>{result.detection.platform.label} support</h3>
-              <ul>
-                {result.detection.platform.actions.map((action) => (
-                  <li key={action.id}><strong>{action.label}:</strong> {action.supportLabel} — {action.note}</li>
-                ))}
-              </ul>
-              <ul>
-                {result.detection.platform.caveats.map((c) => <li key={c}>{c}</li>)}
-              </ul>
-            </>
-          ) : null}
-
-          {result.probeError ? (
-            <Banner tone="warn" title={result.probeError.message}>
-              {result.probeError.hint ? <div className="hint">{result.probeError.hint}</div> : null}
-            </Banner>
-          ) : null}
-
-          {result.media ? (
-            <>
-              <h3>Media info</h3>
-              <ul>
-                <li><strong>Title:</strong> {result.media.title}</li>
-                {result.media.uploader ? <li><strong>Uploader:</strong> {result.media.uploader}</li> : null}
-                {typeof result.media.durationSeconds === 'number' ? <li><strong>Duration:</strong> {result.media.durationSeconds}s</li> : null}
-                <li><strong>Available formats:</strong> {formats.length}</li>
-              </ul>
+              {result.probeError ? (
+                <Banner tone="warn" title={result.probeError.message}>
+                  {result.probeError.hint ? <div className="hint">{result.probeError.hint}</div> : null}
+                </Banner>
+              ) : null}
             </>
           ) : null}
         </div>
-      ) : null}
+      </details>
     </>
   );
 }
