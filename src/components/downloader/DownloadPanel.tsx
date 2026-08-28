@@ -35,6 +35,21 @@ export default function DownloadPanel({ url, downloader }: Props) {
     setFormatId('');
   }, [url, reset]);
 
+  async function handlePrimaryDownload() {
+    if (!url.trim()) return;
+
+    if (qualityReady && canonicalUrl) {
+      await download({ url: canonicalUrl, mode, formatId });
+      return;
+    }
+
+    const probed = await probe(url);
+    const probedUrl = probed?.detection?.canonicalUrl;
+    if (probed?.media && probedUrl) {
+      await download({ url: probedUrl, mode, formatId: '' });
+    }
+  }
+
   return (
     <>
       {current ? (
@@ -46,8 +61,8 @@ export default function DownloadPanel({ url, downloader }: Props) {
       ) : null}
 
       <div className="button-row">
-        <button type="button" className="primary" disabled={!url.trim() || probing} onClick={() => void probe(url)}>
-          {probing ? 'Preparing…' : 'Download'}
+        <button type="button" className="primary" disabled={!url.trim() || probing || downloading} onClick={() => void handlePrimaryDownload()}>
+          {probing ? 'Checking…' : downloading ? 'Downloading…' : 'Download video'}
         </button>
       </div>
 
@@ -56,37 +71,6 @@ export default function DownloadPanel({ url, downloader }: Props) {
           {error.hint ? <div className="hint">{error.hint}</div> : null}
         </Banner>
       ) : null}
-
-      <div className="card" style={{ marginTop: '1rem' }}>
-        <h2>Download</h2>
-        <div className="field">
-          <label htmlFor="dl-mode">Mode</label>
-          <select id="dl-mode" value={mode} onChange={(e) => setMode(e.target.value as DownloadMode)} disabled={!qualityReady}>
-            <option value="video">Video</option>
-            <option value="audio">Audio only</option>
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="format-id">Quality</label>
-          <select id="format-id" value={formatId} onChange={(e) => setFormatId(e.target.value)} disabled={!qualityReady}>
-            <option value="">{qualityReady ? 'Best automatic choice' : 'Click Download first'}</option>
-            {formats.map((format) => (
-              <option key={format.id} value={format.id}>{format.label}</option>
-            ))}
-          </select>
-          <p className="hint">{qualityReady ? 'Choose a quality if available, or leave automatic.' : 'After the link is checked, quality options will show here.'}</p>
-        </div>
-        <button
-          type="button"
-          className="primary"
-          disabled={!canDownload || !canonicalUrl || !qualityReady || downloading}
-          onClick={() => {
-            if (canonicalUrl) void download({ url: canonicalUrl, mode, formatId });
-          }}
-        >
-          {downloading ? 'Downloading…' : 'Start download'}
-        </button>
-      </div>
 
       {result?.media ? (
         <div className="card" style={{ marginTop: '1rem' }}>
@@ -97,6 +81,41 @@ export default function DownloadPanel({ url, downloader }: Props) {
             <li><strong>Available qualities:</strong> {formats.length}</li>
           </ul>
         </div>
+      ) : null}
+
+      {result?.media ? (
+        <details className="card" style={{ marginTop: '1rem' }}>
+          <summary><strong>Choose another quality / mode</strong></summary>
+          <div style={{ marginTop: '1rem' }}>
+            <div className="field">
+              <label htmlFor="dl-mode">Mode</label>
+              <select id="dl-mode" value={mode} onChange={(e) => setMode(e.target.value as DownloadMode)}>
+                <option value="video">Video</option>
+                <option value="audio">Audio only</option>
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="format-id">Quality</label>
+              <select id="format-id" value={formatId} onChange={(e) => setFormatId(e.target.value)}>
+                <option value="">Best automatic choice</option>
+                {formats.map((format) => (
+                  <option key={format.id} value={format.id}>{format.label}</option>
+                ))}
+              </select>
+              <p className="hint">Choose a quality if available, or leave automatic.</p>
+            </div>
+            <button
+              type="button"
+              className="primary"
+              disabled={!canDownload || !canonicalUrl || downloading}
+              onClick={() => {
+                if (canonicalUrl) void download({ url: canonicalUrl, mode, formatId });
+              }}
+            >
+              {downloading ? 'Downloading…' : 'Download selected quality'}
+            </button>
+          </div>
+        </details>
       ) : null}
 
       <details className="card" style={{ marginTop: '1rem' }}>
