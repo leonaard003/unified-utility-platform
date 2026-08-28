@@ -7,9 +7,10 @@ import type { DownloadMode, useDownloader } from '@/components/downloader/useDow
 type Props = {
   url: string;
   downloader: ReturnType<typeof useDownloader>;
+  showEngineBanner?: boolean;
 };
 
-export default function DownloadPanel({ url, downloader }: Props) {
+export default function DownloadPanel({ url, downloader, showEngineBanner = true }: Props) {
   const {
     current,
     result,
@@ -52,7 +53,7 @@ export default function DownloadPanel({ url, downloader }: Props) {
 
   return (
     <>
-      {current ? (
+      {showEngineBanner && current ? (
         <Banner tone={current.engine.available ? 'ok' : 'warn'} title={current.engine.available ? 'Download engine ready' : 'Download engine missing'}>
           <div className="hint">
             {current.engine.available ? `yt-dlp ready${current.engine.version ? ` (${current.engine.version})` : ''}.` : current.engine.installHint}

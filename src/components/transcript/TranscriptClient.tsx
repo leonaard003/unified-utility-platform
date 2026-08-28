@@ -24,9 +24,7 @@ type TranscriptResponse = {
   engine?: string;
 };
 
-type Flow = 'transcript' | 'download';
-
-function download(name: string, mime: string, text: string) {
+function downloadText(name: string, mime: string, text: string) {
   const blob = new Blob([text], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -38,19 +36,23 @@ function download(name: string, mime: string, text: string) {
 
 export default function TranscriptClient() {
   const [url, setUrl] = useState('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-  const [flow, setFlow] = useState<Flow | null>(null);
   const [mode, setMode] = useState<'live' | 'demo'>('live');
   const [language, setLanguage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
   const [result, setResult] = useState<TranscriptResponse | null>(null);
+  const [activeTab, setActiveTab] = useState<'transcript' | 'download'>('download');
   const downloader = useDownloader();
 
-  const filenameBase = useMemo(() => (result?.title || result?.videoId || 'transcript').replace(/[^\w.-]+/g, '_'), [result]);
+  const filenameBase = useMemo(
+    () => (result?.title || result?.videoId || 'transcript').replace(/[^\w.-]+/g, '_'),
+    [result],
+  );
 
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function runTranscript() {
+    if (!url.trim()) return;
+    setActiveTab('transcript');
     setLoading(true);
     setError(null);
     setHint(null);
@@ -78,7 +80,7 @@ export default function TranscriptClient() {
   return (
     <div className="card">
       <h1>Video Transcript</h1>
-      <p className="lede">Paste one public video URL from YouTube, Instagram, TikTok, or X/Twitter, then choose whether you want a transcript of it or the media file itself.</p>
+      <p className="lede">Paste link, lalu pilih mau ambil transcript atau langsung download video.</p>
 
       <div className="field">
         <label htmlFor="video-url">Public video URL</label>
@@ -86,53 +88,46 @@ export default function TranscriptClient() {
         <p className="hint">Supported now: YouTube, Instagram, TikTok, X/Twitter public video URLs.</p>
       </div>
 
-      <div className="field">
-        <span className="field-label" id="flow-label">What do you want to do?</span>
-        <div className="action-choice" role="group" aria-labelledby="flow-label">
-          <button type="button" className={flow === 'transcript' ? 'primary' : ''} aria-pressed={flow === 'transcript'} onClick={() => setFlow('transcript')}>
-            Get transcript
-          </button>
-          <button type="button" className={flow === 'download' ? 'primary' : ''} aria-pressed={flow === 'download'} onClick={() => setFlow('download')}>
-            Download video
-          </button>
-        </div>
-        {flow === null ? <p className="hint">Pick one to see its options. You can switch at any time — the URL above stays.</p> : null}
+      <div className="button-row">
+        <button
+          type="button"
+          className={activeTab === 'transcript' ? 'primary' : ''}
+          disabled={loading}
+          onClick={() => void runTranscript()}
+        >
+          {loading ? 'Processing…' : 'Get transcript'}
+        </button>
+        <button
+          type="button"
+          className={activeTab === 'download' ? 'primary' : ''}
+          onClick={() => setActiveTab('download')}
+        >
+          Download video
+        </button>
       </div>
 
-      {flow === 'transcript' ? (
-        <>
-          <Banner tone="info" title="Transcript">
-            <div className="hint">
-              Klik sekali untuk ambil transcript. Kalau video diblok platform, nanti error akan dijelaskan langsung.
-            </div>
-          </Banner>
+      <details className="card" style={{ marginTop: '1rem' }}>
+        <summary><strong>Advanced transcript options</strong></summary>
+        <div className="field" style={{ marginTop: '1rem' }}>
+          <label htmlFor="mode">Mode</label>
+          <select id="mode" value={mode} onChange={(e) => setMode(e.target.value as 'live' | 'demo')}>
+            <option value="live">Live transcription</option>
+            <option value="demo">Demo transcript</option>
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="lang">Language hint (optional)</label>
+          <input id="lang" type="text" value={language} onChange={(e) => setLanguage(e.target.value)} placeholder="en, id, en-US" />
+        </div>
+      </details>
 
-          <form onSubmit={onSubmit}>
-            <div className="button-row">
-              <button type="submit" className="primary" disabled={loading}>{loading ? 'Processing…' : 'Get transcript'}</button>
-            </div>
-
-            <details className="card" style={{ marginTop: '1rem' }}>
-              <summary><strong>Advanced transcript options</strong></summary>
-              <div className="field" style={{ marginTop: '1rem' }}>
-                <label htmlFor="mode">Mode</label>
-                <select id="mode" value={mode} onChange={(e) => setMode(e.target.value as 'live' | 'demo')}>
-                  <option value="live">Live transcription</option>
-                  <option value="demo">Demo transcript</option>
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="lang">Language hint (optional)</label>
-                <input id="lang" type="text" value={language} onChange={(e) => setLanguage(e.target.value)} placeholder="en, id, en-US" />
-              </div>
-            </details>
-          </form>
-
-          {error ? <Banner tone="error" title={error}>{hint ? <div className="hint">{hint}</div> : null}</Banner> : null}
-        </>
+      {activeTab === 'transcript' && error ? (
+        <Banner tone="error" title={error}>
+          {hint ? <div className="hint">{hint}</div> : null}
+        </Banner>
       ) : null}
 
-      {flow === 'download' ? <DownloadPanel url={url} downloader={downloader} /> : null}
+      {activeTab === 'download' ? <DownloadPanel url={url} downloader={downloader} showEngineBanner={false} /> : null}
 
       {result ? (
         <div className="card" style={{ marginTop: '1rem' }}>
@@ -147,9 +142,9 @@ export default function TranscriptClient() {
           </ul>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button type="button" onClick={() => navigator.clipboard.writeText(result.plainText)}>Copy text</button>
-            <button type="button" onClick={() => download(`${filenameBase}.txt`, 'text/plain;charset=utf-8', result.plainText)}>Download TXT</button>
-            <button type="button" onClick={() => download(`${filenameBase}.srt`, 'application/x-subrip', result.srt)}>Download SRT</button>
-            <button type="button" onClick={() => download(`${filenameBase}.json`, 'application/json', result.json)}>Download JSON</button>
+            <button type="button" onClick={() => downloadText(`${filenameBase}.txt`, 'text/plain;charset=utf-8', result.plainText)}>Download TXT</button>
+            <button type="button" onClick={() => downloadText(`${filenameBase}.srt`, 'application/x-subrip', result.srt)}>Download SRT</button>
+            <button type="button" onClick={() => downloadText(`${filenameBase}.json`, 'application/json', result.json)}>Download JSON</button>
           </div>
           <h3>Transcript</h3>
           <textarea readOnly rows={18} value={result.segments.map((s) => `${Math.floor(s.start / 60)}:${String(Math.floor(s.start % 60)).padStart(2, '0')}  ${s.text}`).join('\n')} />
