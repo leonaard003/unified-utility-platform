@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "node .next/standalone/server.js",
     "lint": "tsc --noEmit",
-    "test": "node --test tests/*.mjs"
+    "test": "node --test tests/*.mjs",
+    "gitpush": "HOME=/opt/data/home GIT_SSH_COMMAND='ssh -i /opt/data/home/.ssh/id_ed25519_hermes_github -o IdentitiesOnly=yes -o StrictHostKeyChecking=no' git push"
   },
   "dependencies": {
     "mammoth": "^1.8.0",
