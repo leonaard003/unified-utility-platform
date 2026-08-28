@@ -45,6 +45,9 @@ export interface TranscriptResult {
   /** Human-readable provenance shown in the UI above the transcript. */
   provenance: string;
   title?: string;
+  platform?: string;
+  sourceUrl?: string;
+  engine?: string;
 }
 
 export interface TranscriptProvider {

@@ -9,7 +9,7 @@ Functionality-first MVP for a single web app that groups:
 
 ## What is real in this build
 
-- **Transcript:** real YouTube caption fetching when YouTube serves anonymous requests to this server; otherwise a clearly-labeled demo mode.
+- **Transcript:** live multi-platform video transcription for public YouTube, Instagram, TikTok, and X/Twitter URLs by downloading media, extracting audio, and transcribing it locally with faster-whisper; demo mode remains available for UI testing.
 - **Downloader:** real platform detection and capability disclosure; actual downloads work only when `yt-dlp` is installed. In this environment, that dependency may be missing.
 - **Converter:** real image conversion, PDF text extraction, DOCX text/HTML/PDF fallback conversion, and ffmpeg-backed audio/video conversion when `ffmpeg` is installed.
 - **Signature:** real in-browser drawing/typing and PNG export.
@@ -20,6 +20,7 @@ Functionality-first MVP for a single web app that groups:
 - Next.js 15 + TypeScript
 - Bundled libs: `sharp`, `pdf-lib`, `mammoth`, `unpdf`
 - Optional native deps: `ffmpeg`, `yt-dlp`, `LibreOffice`
+- Python STT runtime: `faster-whisper`
 
 ## Project location
 
@@ -76,7 +77,7 @@ For Hostinger VPS + Docker Manager, follow `DEPLOY_HOSTINGER.md`.
 ## Optional dependencies
 
 ### yt-dlp
-Needed for downloader probing/downloading.
+Needed for downloader probing/downloading and for live video-transcript source fetching.
 
 Example install options:
 

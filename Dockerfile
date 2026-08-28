@@ -19,7 +19,7 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends ffmpeg python3 python3-venv ca-certificates \
   && rm -rf /var/lib/apt/lists/* \
   && python3 -m venv /opt/yt-dlp-venv \
-  && /opt/yt-dlp-venv/bin/pip install --no-cache-dir --upgrade pip yt-dlp
+  && /opt/yt-dlp-venv/bin/pip install --no-cache-dir --upgrade pip yt-dlp faster-whisper
 
 ENV PATH="/opt/yt-dlp-venv/bin:${PATH}"
 ENV YTDLP_PATH=/opt/yt-dlp-venv/bin/yt-dlp
