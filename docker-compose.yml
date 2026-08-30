@@ -14,6 +14,18 @@ services:
       UUP_TMP_TTL_MINUTES: 30
       UUP_MAX_UPLOAD_MB: 100
       UUP_MAX_DOWNLOAD_MB: 300
+      # External provider layer. Compose reads these from a .env file sitting
+      # next to this one on the server; that file is untracked, so the token
+      # never reaches the repository. Leaving APIFY_TOKEN empty keeps the app
+      # on the local yt-dlp pipeline exactly as before.
+      APIFY_TOKEN: ${APIFY_TOKEN:-}
+      APIFY_BASE_URL: ${APIFY_BASE_URL:-https://api.apify.com}
+      UUP_PROVIDER_MODE: ${UUP_PROVIDER_MODE:-hybrid}
+      UUP_PROVIDER_TIMEOUT_SECONDS: ${UUP_PROVIDER_TIMEOUT_SECONDS:-180}
+      UUP_PROVIDER_DISABLED: ${UUP_PROVIDER_DISABLED:-}
+      UUP_TRANSCRIPT_PROVIDER_PRIMARY: ${UUP_TRANSCRIPT_PROVIDER_PRIMARY:-agentx/video-transcript}
+      UUP_DOWNLOAD_PROVIDER_PRIMARY: ${UUP_DOWNLOAD_PROVIDER_PRIMARY:-agentx/all-video-scraper}
+      UUP_METADATA_PROVIDER_PRIMARY: ${UUP_METADATA_PROVIDER_PRIMARY:-scrapearchitect/youtube-video-formats-scraper}
     volumes:
       - unified_utility_tmp:/app/tmp
     labels:

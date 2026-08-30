@@ -59,3 +59,43 @@ After this is set up, your flow becomes:
 1. revise code
 2. push to GitHub `main`
 3. GitHub Actions SSH into VPS and redeploy automatically
+
+## Enabling the external provider layer (APIFY_TOKEN)
+
+YouTube refuses requests from datacenter IPs, so `yt-dlp` running on the VPS
+gets `Sign in to confirm you're not a bot`. Routing the request through an
+external provider makes it come from that provider's address pool instead.
+
+The code path already exists — it only needs a token in the container's
+environment. `docker-compose.yml` passes these through from a `.env` file that
+sits next to it on the server. That file is untracked, so the token never
+reaches the repository.
+
+### On the VPS
+
+```bash
+cd /root/unified-utility-platform
+cat > .env <<'EOF'
+APIFY_TOKEN=paste-your-token-here
+EOF
+chmod 600 .env
+docker compose up -d --build
+```
+
+### Verify it took effect
+
+```bash
+curl -s http://127.0.0.1:3100/api/transcript
+```
+
+`providers.apifyConfigured` should now read `true`, and each feature should
+report `enabled: true`. While the token is missing it reads `false` with the
+reason spelled out — the app never pretends the provider is available.
+
+### Notes
+
+- The token is read from `process.env` on every request, so no rebuild is
+  needed to rotate it — recreate the container and it takes effect.
+- `.env` survives `git pull`, so deployments do not overwrite it.
+- Set `UUP_PROVIDER_MODE=local-only` to switch the layer off again without
+  removing the token.
