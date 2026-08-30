@@ -67,6 +67,12 @@ export function useDownloader() {
       }
       const data = (await response.json()) as ProbeResponse;
       setResult(data);
+      // A probe that finds nothing still answers 200 and explains why in
+      // `probeError`. Without this the UI simply went quiet on the one path
+      // users hit most: no engine, no token, or a platform refusing the request.
+      if (!data.media && data.probeError) {
+        setError({ message: data.probeError.message, hint: data.probeError.hint });
+      }
       return data;
     } catch (err) {
       setError({ message: err instanceof Error ? err.message : 'Could not check that URL.' });

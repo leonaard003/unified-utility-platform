@@ -936,3 +936,70 @@ th {
   display: flex;
   flex-direction: column;
 }
+
+/* ---------- Search bar ---------- */
+
+.searchbar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem;
+  margin: 0.25rem 0 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(6, 13, 32, 0.66);
+  box-shadow: inset 0 0 0 1px rgba(96, 148, 255, 0.06);
+}
+
+.searchbar:focus-within {
+  border-color: var(--border-strong);
+  box-shadow: var(--glow);
+}
+
+.searchbar-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 0.45rem 0.8rem;
+  font-size: 1rem;
+}
+
+.searchbar-input:focus-visible {
+  outline: none;
+}
+
+.searchbar-input:hover {
+  border-color: transparent;
+}
+
+.searchbar button {
+  flex: none;
+}
+
+.searchbar-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.hint.centered {
+  text-align: center;
+  margin: 0.5rem 0 1rem;
+}
+
+@media (max-width: 560px) {
+  .searchbar {
+    flex-wrap: wrap;
+    border-radius: 18px;
+  }
+
+  .searchbar-input {
+    flex-basis: 100%;
+  }
+
+  .searchbar button {
+    flex: 1 1 auto;
+  }
+}
