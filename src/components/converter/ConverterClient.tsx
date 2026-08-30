@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Banner from '@/components/Banner';
+import FormatCatalog from '@/components/converter/FormatCatalog';
 import { formatBytes } from '@/lib/limits';
 
 type OptionId = 'width' | 'height' | 'quality' | 'pageSize' | 'audioBitrate' | 'videoHeight';
 
 type ConversionSpec = {
   id: string;
+  category: string;
   label: string;
   from: string[];
   outExt: string;
@@ -506,6 +508,8 @@ export default function ConverterClient() {
           {loading ? 'Converting…' : readyCount > 1 ? `Convert ${readyCount} files` : 'Convert & download'}
         </button>
       </form>
+
+      {catalog ? <FormatCatalog conversions={catalog.conversions} capabilities={catalog.capabilities} /> : null}
 
       <dialog ref={dialogRef} className="options-dialog" onClose={() => setOptionsFor(null)}>
         {activeItem && activeSpec ? (
