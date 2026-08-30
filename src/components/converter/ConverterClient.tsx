@@ -37,12 +37,6 @@ function triggerDownload(url: string, name: string) {
 export default function ConverterClient() {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [items, setItems] = useState<Item[]>([]);
-  const [width, setWidth] = useState('');
-  const [height, setHeight] = useState('');
-  const [quality, setQuality] = useState('80');
-  const [pageSize, setPageSize] = useState('a4');
-  const [audioBitrate, setAudioBitrate] = useState('192k');
-  const [videoHeight, setVideoHeight] = useState('original');
   const [addError, setAddError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -215,13 +209,8 @@ export default function ConverterClient() {
     const form = new FormData();
     form.append('file', item.file);
     form.append('conversionId', item.conversionId);
-    if (width) form.append('width', width);
-    if (height) form.append('height', height);
-    if (quality) form.append('quality', quality);
-    if (pageSize) form.append('pageSize', pageSize);
-    if (audioBitrate) form.append('audioBitrate', audioBitrate);
-    if (videoHeight) form.append('videoHeight', videoHeight);
-
+    // No tuning fields are sent: the API already defaults to quality 80,
+    // A4 pages, 192k audio, and the source video height.
     const response = await fetch('/api/converter/convert', { method: 'POST', body: form });
     if (!response.ok) {
       const data = await response.json().catch(() => null);
@@ -397,18 +386,6 @@ export default function ConverterClient() {
         {unsupported.length ? (
           <Banner tone="warn" title={`No conversion available for ${unsupported.map((item) => item.file.name).join(', ')}. These are skipped.`} />
         ) : null}
-
-        <fieldset>
-          <legend>Options applied to every file</legend>
-          <div className="grid">
-            <div className="field"><label htmlFor="width">Width (optional)</label><input id="width" type="number" value={width} onChange={(e) => setWidth(e.target.value)} /></div>
-            <div className="field"><label htmlFor="height">Height (optional)</label><input id="height" type="number" value={height} onChange={(e) => setHeight(e.target.value)} /></div>
-            <div className="field"><label htmlFor="quality">Quality</label><input id="quality" type="number" min={1} max={100} value={quality} onChange={(e) => setQuality(e.target.value)} /></div>
-            <div className="field"><label htmlFor="pageSize">Page size</label><select id="pageSize" value={pageSize} onChange={(e) => setPageSize(e.target.value)}><option value="a4">A4</option><option value="letter">Letter</option><option value="fit">Fit</option></select></div>
-            <div className="field"><label htmlFor="audioBitrate">Audio bitrate</label><select id="audioBitrate" value={audioBitrate} onChange={(e) => setAudioBitrate(e.target.value)}><option>96k</option><option>128k</option><option>192k</option><option>256k</option><option>320k</option></select></div>
-            <div className="field"><label htmlFor="videoHeight">Video height</label><select id="videoHeight" value={videoHeight} onChange={(e) => setVideoHeight(e.target.value)}><option value="original">Original</option><option value="1080">1080</option><option value="720">720</option><option value="480">480</option><option value="360">360</option></select></div>
-          </div>
-        </fieldset>
 
         <button type="submit" className="primary" disabled={loading || !readyCount}>
           {loading ? 'Converting…' : readyCount > 1 ? `Convert ${readyCount} files` : 'Convert & download'}
