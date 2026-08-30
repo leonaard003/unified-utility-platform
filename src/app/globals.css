@@ -1,18 +1,27 @@
 :root {
-  --bg: #f6f7f9;
-  --surface: #ffffff;
-  --border: #d8dce3;
-  --text: #16191d;
-  --muted: #5b6472;
-  --accent: #1f5fd6;
-  --accent-weak: #eaf0fd;
-  --ok: #1a7f4b;
-  --ok-weak: #e7f6ee;
-  --warn: #9a6207;
-  --warn-weak: #fdf3e0;
-  --err: #b3261e;
-  --err-weak: #fdecea;
-  --radius: 8px;
+  --bg: #05080f;
+  --surface: rgba(14, 26, 55, 0.72);
+  --surface-2: rgba(22, 38, 76, 0.6);
+  --border: rgba(96, 148, 255, 0.22);
+  --border-strong: rgba(96, 148, 255, 0.5);
+  --text: #e9eefb;
+  --muted: #93a5c9;
+  --accent: #5b93ff;
+  --accent-2: #7fd8ff;
+  --accent-weak: rgba(91, 147, 255, 0.16);
+  --ok: #4ade9b;
+  --ok-weak: rgba(74, 222, 155, 0.12);
+  --warn: #f7c66b;
+  --warn-weak: rgba(247, 198, 107, 0.12);
+  --err: #ff8a8a;
+  --err-weak: rgba(255, 138, 138, 0.12);
+  /* Surfaces that stand in for physical paper stay light, so black ink and
+     printed layouts read correctly regardless of the interface theme. */
+  --paper: #ffffff;
+  --paper-edge: #cfd6e6;
+  --radius: 14px;
+  --shadow: 0 18px 40px rgba(2, 8, 26, 0.55);
+  --glow: 0 0 22px rgba(91, 147, 255, 0.35);
 }
 
 * {
@@ -26,11 +35,26 @@ body {
 }
 
 body {
+  position: relative;
+  min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-jakarta), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 16px;
-  line-height: 1.55;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Fixed behind everything so the glow does not scroll away on long pages. */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1100px 620px at 12% -12%, rgba(46, 96, 214, 0.38), transparent 62%),
+    radial-gradient(900px 560px at 96% 4%, rgba(24, 132, 216, 0.26), transparent 60%),
+    radial-gradient(1000px 700px at 50% 116%, rgba(28, 66, 170, 0.32), transparent 62%);
 }
 
 a {
@@ -59,8 +83,12 @@ a {
 /* ---------- Layout ---------- */
 
 .site-header {
-  background: var(--surface);
+  background: rgba(8, 16, 36, 0.62);
   border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .site-header-inner,
@@ -80,7 +108,8 @@ a {
 }
 
 .brand {
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   font-size: 1.05rem;
   color: var(--text);
   text-decoration: none;
@@ -109,8 +138,9 @@ a {
 
 .nav a[aria-current='page'] {
   background: var(--accent-weak);
-  color: var(--accent);
+  color: #fff;
   font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--border-strong), var(--glow);
 }
 
 main {
@@ -119,7 +149,7 @@ main {
 
 .site-footer {
   border-top: 1px solid var(--border);
-  background: var(--surface);
+  background: rgba(8, 16, 36, 0.5);
   color: var(--muted);
   font-size: 0.85rem;
   padding: 1rem 0;
@@ -128,8 +158,10 @@ main {
 /* ---------- Typography ---------- */
 
 h1 {
-  font-size: 1.7rem;
-  margin: 0 0 0.35rem;
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.4rem;
 }
 h2 {
   font-size: 1.2rem;
@@ -157,11 +189,34 @@ h3 {
 /* ---------- Cards / grid ---------- */
 
 .card {
-  background: var(--surface);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1rem;
+  border-radius: 18px;
+  padding: 1.15rem;
   margin-bottom: 1rem;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+/* Nested cards sit on top of a card, so they drop the heavy shadow. */
+.card .card {
+  box-shadow: none;
+  background: rgba(10, 20, 44, 0.5);
+}
+
+/* Centred column for the single-purpose tool pages. */
+.tool-shell {
+  max-width: 900px;
+  margin-inline: auto;
+}
+
+.tool-shell > h1,
+.tool-shell > .lede {
+  text-align: center;
+}
+
+.tool-shell > .lede {
+  margin-inline: auto;
 }
 
 .grid {
@@ -174,20 +229,24 @@ h3 {
   display: block;
   text-decoration: none;
   color: inherit;
-  background: var(--surface);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1rem;
+  border-radius: 18px;
+  padding: 1.15rem;
+  box-shadow: var(--shadow);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
 .tool-card:hover {
-  border-color: var(--accent);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow), var(--glow);
+  transform: translateY(-2px);
 }
 
 .tool-card h2 {
   margin: 0 0 0.25rem;
   font-size: 1.05rem;
-  color: var(--accent);
+  color: var(--accent-2);
 }
 
 .tool-card p {
@@ -222,13 +281,29 @@ input[type='number'],
 select,
 textarea {
   width: 100%;
-  padding: 0.5rem 0.6rem;
+  padding: 0.55rem 0.7rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: #fff;
+  border-radius: 10px;
+  background: rgba(6, 13, 32, 0.66);
   color: var(--text);
   font: inherit;
   font-size: 0.95rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input:hover:not(:disabled),
+select:hover:not(:disabled),
+textarea:hover {
+  border-color: var(--border-strong);
+}
+
+select option {
+  background: #0b1630;
+  color: var(--text);
+}
+
+::placeholder {
+  color: rgba(147, 165, 201, 0.65);
 }
 
 textarea {
@@ -243,7 +318,7 @@ input[type='file'] {
 
 fieldset {
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 12px;
   padding: 0.75rem;
   margin: 0 0 0.9rem;
 }
@@ -274,31 +349,34 @@ button,
 .button {
   font: inherit;
   font-size: 0.92rem;
-  padding: 0.5rem 0.9rem;
-  border-radius: var(--radius);
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
   border: 1px solid var(--border);
-  background: var(--surface);
+  background: rgba(20, 36, 74, 0.7);
   color: var(--text);
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
 button:hover:not(:disabled),
 .button:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--border-strong);
+  box-shadow: var(--glow);
 }
 
 button.primary {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: linear-gradient(135deg, var(--accent), #2f6bff);
+  border-color: transparent;
   color: #fff;
+  box-shadow: var(--glow);
 }
 
 button.primary:hover:not(:disabled) {
-  background: #1a4fb4;
-  color: #fff;
+  background: linear-gradient(135deg, #7aa8ff, #3d76ff);
+  box-shadow: 0 0 28px rgba(91, 147, 255, 0.6);
 }
 
 button:disabled {
@@ -373,7 +451,7 @@ button:disabled {
   padding: 0.1rem 0.5rem;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: #fff;
+  background: rgba(9, 18, 40, 0.6);
   color: var(--muted);
   white-space: nowrap;
 }
@@ -418,7 +496,7 @@ th {
 }
 
 .output {
-  background: #fbfcfd;
+  background: rgba(4, 10, 26, 0.7);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.75rem;
@@ -453,13 +531,15 @@ th {
 }
 
 .sig-canvas {
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
+  border: 1px solid var(--paper-edge);
+  border-radius: 12px;
   background:
-    linear-gradient(45deg, #eef0f3 25%, transparent 25%, transparent 75%, #eef0f3 75%),
-    linear-gradient(45deg, #eef0f3 25%, transparent 25%, transparent 75%, #eef0f3 75%);
-  background-size: 16px 16px;
-  background-position: 0 0, 8px 8px;
+    linear-gradient(45deg, #e9ecf3 25%, transparent 25%, transparent 75%, #e9ecf3 75%),
+    linear-gradient(45deg, #e9ecf3 25%, transparent 25%, transparent 75%, #e9ecf3 75%),
+    var(--paper);
+  background-size: 16px 16px, 16px 16px, auto;
+  background-position: 0 0, 8px 8px, 0 0;
+  box-shadow: var(--glow);
   touch-action: none;
   width: 100%;
   height: auto;
@@ -469,9 +549,9 @@ th {
 
 .preview-img {
   max-width: 100%;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: #fff;
+  border: 1px solid var(--paper-edge);
+  border-radius: 12px;
+  background: var(--paper);
 }
 
 
@@ -499,7 +579,7 @@ th {
   padding: 1rem;
   border: 2px dashed var(--border);
   border-radius: var(--radius);
-  background: #fbfcfd;
+  background: rgba(9, 18, 40, 0.55);
   cursor: pointer;
   text-align: center;
   transition: border-color 0.15s ease, background 0.15s ease;
@@ -549,7 +629,7 @@ th {
   object-fit: contain;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: #fff;
+  background: var(--paper);
 }
 
 .file-thumb-generic {
@@ -606,7 +686,7 @@ th {
   padding: 0.35rem 0.55rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: #fbfcfd;
+  background: rgba(9, 18, 40, 0.55);
   color: var(--muted);
 }
 
@@ -625,15 +705,18 @@ th {
 
 .options-dialog {
   width: min(640px, calc(100vw - 2rem));
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
+  padding: 1.15rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  /* Opaque: a translucent panel over the backdrop washes the text out. */
+  background: linear-gradient(180deg, #16264c, #0c1731);
   color: var(--text);
+  box-shadow: var(--shadow), var(--glow);
 }
 
 .options-dialog::backdrop {
-  background: rgba(22, 25, 29, 0.55);
+  background: rgba(3, 7, 18, 0.72);
+  backdrop-filter: blur(3px);
 }
 
 .options-head {
@@ -726,7 +809,7 @@ th {
   padding: 0.2rem 0.45rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: #fbfcfd;
+  background: rgba(9, 18, 40, 0.55);
   color: var(--text);
 }
 
@@ -746,7 +829,7 @@ th {
   padding: 0.5rem 0.6rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: #fbfcfd;
+  background: rgba(9, 18, 40, 0.55);
 }
 
 .catalog-cell-head {
@@ -777,9 +860,10 @@ th {
   text-align: center;
   min-height: 160px;
   padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: #fff;
+  border: 1px solid var(--paper-edge);
+  border-radius: 12px;
+  background: var(--paper);
+  color: #111318;
   font-size: 3rem;
   line-height: 1.2;
   overflow-wrap: anywhere;
@@ -802,7 +886,7 @@ th {
   padding: 0.55rem 0.7rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: #fbfcfd;
+  background: rgba(9, 18, 40, 0.55);
 }
 
 .stat-label {
@@ -824,26 +908,26 @@ th {
   height: 300px;
   width: auto;
   max-width: 100%;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: #fff;
+  border: 1px solid var(--paper-edge);
+  border-radius: 10px;
+  background: var(--paper);
   padding: 0.5rem;
 }
 
 .sheet-waste {
-  fill: #eef0f3;
+  fill: #e6eaf2;
 }
 
 .sheet-piece {
-  fill: var(--accent-weak);
-  stroke: var(--accent);
+  fill: rgba(91, 147, 255, 0.16);
+  stroke: #2f6bff;
   stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
 
 .sheet-outline {
   fill: none;
-  stroke: var(--text);
+  stroke: #7c879e;
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
 }

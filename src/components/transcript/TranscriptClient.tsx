@@ -78,7 +78,7 @@ export default function TranscriptClient() {
   }
 
   return (
-    <div className="card">
+    <div className="card tool-shell">
       <h1>Video Transcript</h1>
       <p className="lede">Paste link, lalu pilih mau ambil transcript atau langsung download video.</p>
 

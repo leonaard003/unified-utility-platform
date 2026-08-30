@@ -68,7 +68,7 @@ export default function PrintCalculatorClient() {
   ];
 
   return (
-    <div className="card">
+    <div className="card tool-shell">
       <h1>Paper &amp; Printing Calculator</h1>
       <p className="lede">Calculate area, how many pieces fit on a sheet, and a simple paper-cost estimate for print work.</p>
 

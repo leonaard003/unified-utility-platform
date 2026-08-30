@@ -109,7 +109,7 @@ export default function SignatureClient() {
   }
 
   return (
-    <div className="card">
+    <div className="card tool-shell">
       <h1>Signature</h1>
       <p className="lede">Draw or type a signature, preview it, and export a PNG. This creates a reusable image asset only; it does not certify legal validity.</p>
 

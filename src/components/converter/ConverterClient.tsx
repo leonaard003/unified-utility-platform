@@ -372,7 +372,7 @@ export default function ConverterClient() {
   const activeChanged = activeItem ? Object.values(activeItem.options).some(Boolean) : false;
 
   return (
-    <div className="card">
+    <div className="card tool-shell">
       <h1>Converter</h1>
       <p className="lede">This module only offers conversions that are actually implemented. Image targets now include JPG, PNG, WEBP, AVIF, GIF, TIFF, BMP, ICO, plus PDF export. Image and document utilities work with bundled dependencies; some formats use ffmpeg.</p>
 
