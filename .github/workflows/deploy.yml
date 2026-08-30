@@ -7,7 +7,33 @@ on:
   workflow_dispatch:
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
   deploy:
+    needs: verify
     runs-on: ubuntu-latest
 
     steps:
@@ -22,6 +48,5 @@ jobs:
             set -e
             cd /root/unified-utility-platform
             git pull origin main
-            docker compose down
             docker compose up -d --build
-            docker ps --filter name=unified-utility-platform
+            docker compose ps
