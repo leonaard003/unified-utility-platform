@@ -2,39 +2,64 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+/** Backing-store size. The element is scaled by CSS; pointers are mapped below. */
+const CANVAS_W = 1000;
+const CANVAS_H = 320;
+
 export default function SignatureClient() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [typing, setTyping] = useState('Onichan');
   const [font, setFont] = useState('Georgia');
-  const [drawing, setDrawing] = useState(false);
+  const [hasInk, setHasInk] = useState(false);
+  // A ref, not state: pointermove can arrive before React has flushed a
+  // setState from pointerdown, and that first segment would be dropped.
+  const drawing = useRef(false);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.strokeStyle = '#111';
   }, []);
 
+  /**
+   * The canvas is 1000x320 internally but rendered at whatever width the
+   * layout gives it, so client coordinates have to be scaled into the backing
+   * store. Without this the stroke lands away from the cursor.
+   */
   function point(event: React.PointerEvent<HTMLCanvasElement>) {
-    const rect = event.currentTarget.getBoundingClientRect();
-    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    const canvas = event.currentTarget;
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: ((event.clientX - rect.left) / rect.width) * canvas.width,
+      y: ((event.clientY - rect.top) / rect.height) * canvas.height,
+    };
   }
 
   function start(event: React.PointerEvent<HTMLCanvasElement>) {
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
+    // Capture keeps the stroke alive if the pointer slips outside the canvas.
+    // It is a convenience, so a failure here must not abort the stroke.
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* no active pointer — drawing still works without capture */
+    }
     const p = point(event);
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
-    setDrawing(true);
+    // A single tap should leave a dot, not nothing.
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    drawing.current = true;
+    setHasInk(true);
   }
 
   function move(event: React.PointerEvent<HTMLCanvasElement>) {
-    if (!drawing) return;
+    if (!drawing.current) return;
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
     const p = point(event);
@@ -42,8 +67,15 @@ export default function SignatureClient() {
     ctx.stroke();
   }
 
-  function end() {
-    setDrawing(false);
+  function end(event: React.PointerEvent<HTMLCanvasElement>) {
+    try {
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+    } catch {
+      /* capture was never taken */
+    }
+    drawing.current = false;
   }
 
   function clearCanvas() {
@@ -51,6 +83,7 @@ export default function SignatureClient() {
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setHasInk(false);
   }
 
   function downloadCanvas(fromTyping = false) {
@@ -80,45 +113,53 @@ export default function SignatureClient() {
       <h1>Signature</h1>
       <p className="lede">Draw or type a signature, preview it, and export a PNG. This creates a reusable image asset only; it does not certify legal validity.</p>
 
-      <div className="grid">
+      <div className="sig-layout">
         <div className="card">
-          <h2>Draw</h2>
+          <h2 style={{ marginTop: 0 }}>Draw</h2>
           <canvas
             ref={canvasRef}
-            width={700}
-            height={220}
+            className="sig-canvas"
+            width={CANVAS_W}
+            height={CANVAS_H}
+            aria-label="Signature drawing area"
             onPointerDown={start}
             onPointerMove={move}
             onPointerUp={end}
-            onPointerLeave={end}
-            style={{ width: '100%', border: '1px solid #d8dce3', background: '#fff', borderRadius: 8, touchAction: 'none' }}
+            onPointerCancel={end}
           />
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
-            <button type="button" onClick={clearCanvas}>Clear</button>
-            <button type="button" onClick={() => downloadCanvas(false)}>Download PNG</button>
+          <div className="button-row" style={{ marginTop: '0.75rem' }}>
+            <button type="button" onClick={clearCanvas} disabled={!hasInk}>Clear</button>
+            <button type="button" className="primary" onClick={() => downloadCanvas(false)} disabled={!hasInk}>
+              Download PNG
+            </button>
+            <span className="muted small">
+              {hasInk ? 'Exports with a transparent background.' : 'Draw with a mouse, pen, or finger.'}
+            </span>
           </div>
         </div>
 
         <div className="card">
-          <h2>Type</h2>
-          <div className="field">
-            <label htmlFor="sig-text">Name</label>
-            <input id="sig-text" type="text" value={typing} onChange={(e) => setTyping(e.target.value)} />
+          <h2 style={{ marginTop: 0 }}>Type</h2>
+          <div className="row">
+            <div className="field">
+              <label htmlFor="sig-text">Name</label>
+              <input id="sig-text" type="text" value={typing} onChange={(e) => setTyping(e.target.value)} />
+            </div>
+            <div className="field">
+              <label htmlFor="sig-font">Font</label>
+              <select id="sig-font" value={font} onChange={(e) => setFont(e.target.value)}>
+                <option>Georgia</option>
+                <option>cursive</option>
+                <option>serif</option>
+                <option>monospace</option>
+              </select>
+            </div>
           </div>
-          <div className="field">
-            <label htmlFor="sig-font">Font</label>
-            <select id="sig-font" value={font} onChange={(e) => setFont(e.target.value)}>
-              <option>Georgia</option>
-              <option>cursive</option>
-              <option>serif</option>
-              <option>monospace</option>
-            </select>
-          </div>
-          <div style={{ border: '1px solid #d8dce3', borderRadius: 8, background: '#fff', padding: '1rem', minHeight: 140, fontFamily: font, fontSize: '3rem' }}>
+          <div className="sig-typed" style={{ fontFamily: font }}>
             {typing || 'Signature'}
           </div>
-          <div style={{ marginTop: '0.75rem' }}>
-            <button type="button" onClick={() => downloadCanvas(true)}>Download typed PNG</button>
+          <div className="button-row" style={{ marginTop: '0.75rem' }}>
+            <button type="button" className="primary" onClick={() => downloadCanvas(true)}>Download typed PNG</button>
           </div>
         </div>
       </div>

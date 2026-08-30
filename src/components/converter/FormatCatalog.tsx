@@ -108,24 +108,22 @@ export default function FormatCatalog({ conversions, capabilities }: Props) {
           CONVERTS TO
           <span className="muted">{group.specs.length} conversions</span>
         </p>
-        <table className="catalog-table">
-          <thead>
-            <tr>
-              {mixedSources ? <th scope="col">From</th> : null}
-              <th scope="col">To</th>
-              <th scope="col">Result</th>
-            </tr>
-          </thead>
-          <tbody>
-            {group.specs.map((spec) => (
-              <tr key={spec.id}>
-                {mixedSources ? <td><span className="chip">{sourceLabel(spec)}</span></td> : null}
-                <td><span className="chip chip-out">{spec.outExt.toUpperCase()}</span></td>
-                <td className="muted">{spec.label}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ul className="catalog-grid">
+          {group.specs.map((spec) => (
+            <li key={spec.id} className="catalog-cell">
+              <span className="catalog-cell-head">
+                {mixedSources ? (
+                  <>
+                    <span className="chip">{sourceLabel(spec)}</span>
+                    <span className="format-arrow" aria-hidden="true">→</span>
+                  </>
+                ) : null}
+                <span className="chip chip-out">{spec.outExt.toUpperCase()}</span>
+              </span>
+              <span className="muted small">{spec.label}</span>
+            </li>
+          ))}
+        </ul>
       </div>
 
       {missing.length ? (

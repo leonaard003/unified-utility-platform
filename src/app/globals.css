@@ -731,24 +731,29 @@ th {
 }
 
 
-.catalog-table {
-  margin-top: 0.35rem;
-  font-size: 0.85rem;
+.catalog-grid {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
-.catalog-table th {
-  font-size: 0.68rem;
+.catalog-cell {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fbfcfd;
 }
 
-.catalog-table td {
-  padding: 0.3rem 0.5rem;
-  vertical-align: middle;
-}
-
-.catalog-table td:not(:last-child),
-.catalog-table th:not(:last-child) {
-  width: 1%;
-  white-space: nowrap;
+.catalog-cell-head {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
 }
 
 .chip-out {
@@ -756,4 +761,89 @@ th {
   background: var(--accent-weak);
   color: var(--accent);
   font-weight: 700;
+}
+
+/* ---------- Signature ---------- */
+
+.sig-layout {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.sig-typed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 160px;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  font-size: 3rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Stat row ---------- */
+
+.stat-row {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.stat {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fbfcfd;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Sheet layout preview ---------- */
+
+.sheet-preview {
+  display: block;
+  margin: 0 auto;
+  height: 400px;
+  width: auto;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  padding: 0.5rem;
+}
+
+.sheet-waste {
+  fill: #eef0f3;
+}
+
+.sheet-piece {
+  fill: var(--accent-weak);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.sheet-outline {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
 }
