@@ -66,6 +66,9 @@ export default function FormatCatalog({ conversions, capabilities }: Props) {
   if (!group) return null;
 
   const totalInputs = new Set(conversions.flatMap((spec) => spec.from)).size;
+  // When every conversion in a category takes the same inputs, a "From" column
+  // would just repeat the ACCEPTS row above it on every single line.
+  const mixedSources = new Set(group.specs.map((spec) => spec.from.join(','))).size > 1;
 
   return (
     <section className="card catalog" aria-labelledby="catalog-heading">
@@ -93,31 +96,36 @@ export default function FormatCatalog({ conversions, capabilities }: Props) {
       </div>
 
       <div className="catalog-panel" id="catalog-panel" role="tabpanel" aria-labelledby={`catalog-tab-${group.category}`}>
-        <div>
-          <p className="catalog-kicker">
-            {group.label.toUpperCase()} INPUT FORMATS
-            <span className="muted">{group.inputs.length} listed</span>
-          </p>
-          <ul className="chip-list">
-            {group.inputs.map((ext) => <li key={ext} className="chip">{ext.toUpperCase()}</li>)}
-          </ul>
-        </div>
+        <p className="catalog-kicker">
+          ACCEPTS
+          <span className="muted">{group.inputs.length} formats</span>
+        </p>
+        <ul className="chip-list">
+          {group.inputs.map((ext) => <li key={ext} className="chip">{ext.toUpperCase()}</li>)}
+        </ul>
 
-        <div>
-          <p className="catalog-kicker">CONVERTS TO</p>
-          <ul className="catalog-targets">
+        <p className="catalog-kicker" style={{ marginTop: '0.9rem' }}>
+          CONVERTS TO
+          <span className="muted">{group.specs.length} conversions</span>
+        </p>
+        <table className="catalog-table">
+          <thead>
+            <tr>
+              {mixedSources ? <th scope="col">From</th> : null}
+              <th scope="col">To</th>
+              <th scope="col">Result</th>
+            </tr>
+          </thead>
+          <tbody>
             {group.specs.map((spec) => (
-              <li key={spec.id}>
-                <span className="catalog-target">
-                  <span className="chip">{sourceLabel(spec)}</span>
-                  <span className="format-arrow" aria-hidden="true">→</span>
-                  <strong>{spec.outExt.toUpperCase()}</strong>
-                </span>
-                <span className="muted small">{spec.label}</span>
-              </li>
+              <tr key={spec.id}>
+                {mixedSources ? <td><span className="chip">{sourceLabel(spec)}</span></td> : null}
+                <td><span className="chip chip-out">{spec.outExt.toUpperCase()}</span></td>
+                <td className="muted">{spec.label}</td>
+              </tr>
             ))}
-          </ul>
-        </div>
+          </tbody>
+        </table>
       </div>
 
       {missing.length ? (
