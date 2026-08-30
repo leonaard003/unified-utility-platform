@@ -3,7 +3,7 @@ import test from 'node:test';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const root = '/opt/data/unified-utility-platform';
+const root = path.resolve(import.meta.dirname, '..');
 
 const requiredFiles = [
   'package.json',
