@@ -581,15 +581,80 @@ th {
   font-size: 0.85rem;
 }
 
-.file-target {
-  flex: 0 1 230px;
-  min-width: 160px;
-}
-
 .file-actions {
   display: flex;
   align-items: center;
   gap: 0.4rem;
   margin-left: auto;
   flex: none;
+}
+
+/* ---------- Per-file conversion controls ---------- */
+
+.file-convert {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 0 1 auto;
+}
+
+.format-badge {
+  flex: none;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fbfcfd;
+  color: var(--muted);
+}
+
+.format-arrow {
+  flex: none;
+  color: var(--muted);
+}
+
+.format-select {
+  width: auto;
+  min-width: 92px;
+  font-weight: 600;
+}
+
+/* ---------- Options dialog ---------- */
+
+.options-dialog {
+  width: min(640px, calc(100vw - 2rem));
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.options-dialog::backdrop {
+  background: rgba(22, 25, 29, 0.55);
+}
+
+.options-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.options-head h2 {
+  margin: 0;
+}
+
+.options-subject {
+  margin: 0.1rem 0 0.9rem;
+  word-break: break-word;
+}
+
+.options-foot {
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
 }
