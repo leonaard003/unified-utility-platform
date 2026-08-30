@@ -1,10 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Banner from '@/components/Banner';
+import { formatBytes } from '@/lib/limits';
 
 type ConversionSpec = { id: string; label: string; from: string[]; outExt: string; notes: string[]; options: string[]; requires?: string };
-type Catalog = { conversions: ConversionSpec[]; capabilities: { id: string; available: boolean }[] };
+type Catalog = {
+  conversions: ConversionSpec[];
+  capabilities: { id: string; available: boolean }[];
+  limits?: { maxUploadBytes: number };
+};
 
 export default function ConverterClient() {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
@@ -20,6 +25,14 @@ export default function ConverterClient() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [dragActive, setDragActive] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  // Drag events fire for child nodes too, so a plain leave handler flickers.
+  // Counting enter/leave pairs keeps the highlight stable.
+  const dragDepth = useRef(0);
+
   useEffect(() => {
     void (async () => {
       const response = await fetch('/api/converter/catalog');
@@ -27,12 +40,93 @@ export default function ConverterClient() {
     })();
   }, []);
 
+  // Without this, dropping a file just outside the zone makes the browser
+  // navigate away from the app and open the file on its own.
+  useEffect(() => {
+    const swallow = (event: DragEvent) => event.preventDefault();
+    window.addEventListener('dragover', swallow);
+    window.addEventListener('drop', swallow);
+    return () => {
+      window.removeEventListener('dragover', swallow);
+      window.removeEventListener('drop', swallow);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!file || !file.type.startsWith('image/')) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  const maxUploadBytes = catalog?.limits?.maxUploadBytes ?? 0;
   const extension = useMemo(() => file?.name.split('.').pop()?.toLowerCase() || '', [file]);
   const available = useMemo(() => (catalog?.conversions || []).filter((spec) => extension && spec.from.includes(extension)), [catalog, extension]);
+  const acceptedExtensions = useMemo(
+    () => [...new Set((catalog?.conversions || []).flatMap((spec) => spec.from))].sort(),
+    [catalog],
+  );
 
   useEffect(() => {
     setConversionId(available[0]?.id || '');
   }, [available]);
+
+  function applyFiles(dropped: File[]) {
+    if (!dropped.length) return;
+    const [next, ...rest] = dropped;
+    if (maxUploadBytes && next.size > maxUploadBytes) {
+      setFile(null);
+      setFileError(`"${next.name}" is ${formatBytes(next.size)}, over the ${formatBytes(maxUploadBytes)} upload limit.`);
+      return;
+    }
+    setFile(next);
+    setFileError(rest.length ? `Only one file at a time. Kept "${next.name}" and ignored ${rest.length} more.` : null);
+  }
+
+  function clearFile() {
+    setFile(null);
+    setFileError(null);
+    if (inputRef.current) inputRef.current.value = '';
+  }
+
+  function onDragEnter(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    dragDepth.current += 1;
+    setDragActive(true);
+  }
+
+  function onDragLeave(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    dragDepth.current -= 1;
+    if (dragDepth.current <= 0) {
+      dragDepth.current = 0;
+      setDragActive(false);
+    }
+  }
+
+  function onDragOver(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+  }
+
+  function onDrop(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    dragDepth.current = 0;
+    setDragActive(false);
+    applyFiles(Array.from(event.dataTransfer.files));
+    // Keep the hidden input empty so re-picking the same file still fires change.
+    if (inputRef.current) inputRef.current.value = '';
+  }
+
+  function onZoneKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      inputRef.current?.click();
+    }
+  }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -80,9 +174,61 @@ export default function ConverterClient() {
 
       <form onSubmit={onSubmit}>
         <div className="field">
-          <label htmlFor="file">Choose file</label>
-          <input id="file" type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} required />
+          <span className="field-label" id="file-label">Choose file</span>
+          <div
+            className={`dropzone${dragActive ? ' is-active' : ''}${file ? ' has-file' : ''}`}
+            role="button"
+            tabIndex={0}
+            aria-labelledby="file-label"
+            aria-describedby="file-help"
+            onClick={() => inputRef.current?.click()}
+            onKeyDown={onZoneKeyDown}
+            onDragEnter={onDragEnter}
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            onDrop={onDrop}
+          >
+            <input
+              ref={inputRef}
+              id="file"
+              type="file"
+              tabIndex={-1}
+              className="dropzone-input"
+              accept={acceptedExtensions.length ? acceptedExtensions.map((ext) => `.${ext}`).join(',') : undefined}
+              onChange={(e) => applyFiles(Array.from(e.target.files || []))}
+            />
+            {file ? (
+              <span className="dropzone-file">
+                {previewUrl ? (
+                  <img src={previewUrl} alt="" className="dropzone-thumb" />
+                ) : (
+                  <span className="dropzone-icon" aria-hidden="true">FILE</span>
+                )}
+                <span className="dropzone-name">{file.name}</span>
+                <span className="dropzone-meta">{formatBytes(file.size)}</span>
+              </span>
+            ) : (
+              <span className="dropzone-empty">
+                <strong>{dragActive ? 'Release to use this file' : 'Drag a file here'}</strong>
+                <span className="muted small">
+                  or click to browse{maxUploadBytes ? ` (up to ${formatBytes(maxUploadBytes)})` : ''}
+                </span>
+              </span>
+            )}
+          </div>
+          <p className="hint" id="file-help">
+            {acceptedExtensions.length ? `Supported: ${acceptedExtensions.join(', ')}` : 'Loading supported formats…'}
+          </p>
+          {file ? (
+            <div className="button-row" style={{ marginTop: '0.5rem' }}>
+              <button type="button" onClick={clearFile}>Remove file</button>
+            </div>
+          ) : null}
+          {/* Kept next to the zone: a rejected drop is invisible if the
+              message renders below the submit button. */}
+          {fileError ? <Banner tone="warn" title={fileError} /> : null}
         </div>
+
         <div className="field">
           <label htmlFor="conversion">Conversion</label>
           <select id="conversion" value={conversionId} onChange={(e) => setConversionId(e.target.value)} disabled={!available.length}>
