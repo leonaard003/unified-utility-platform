@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Banner from '@/components/Banner';
 import { useDownloader, type DownloadMode } from '@/components/downloader/useDownloader';
 
@@ -34,6 +34,16 @@ function timecode(seconds: number) {
   return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 }
 
+/**
+ * Platforms refusing a datacenter IP is the single most common failure here,
+ * and yt-dlp reports it as a wall of text. Recognising the signature lets the
+ * page say what actually happened and point at the one field that fixes it.
+ */
+function isPlatformBlock(...parts: (string | null | undefined)[]): boolean {
+  const text = parts.filter(Boolean).join(' ');
+  return /sign in to confirm|not a bot|UPSTREAM_BLOCKED|confirm your age|login required/i.test(text);
+}
+
 export default function TranscriptClient() {
   const [url, setUrl] = useState('');
   const [mode, setMode] = useState<'live' | 'demo'>('live');
@@ -45,12 +55,18 @@ export default function TranscriptClient() {
   const [hint, setHint] = useState<string | null>(null);
   const [pasteNote, setPasteNote] = useState<string | null>(null);
   const [result, setResult] = useState<TranscriptResponse | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const downloader = useDownloader();
 
   const engine = downloader.current?.engine;
   const media = downloader.result?.media;
   const canonicalUrl = downloader.result?.detection?.canonicalUrl || null;
   const busy = loading || downloader.probing || downloader.downloading;
+  const blocked = isPlatformBlock(error, hint, downloader.error?.message, downloader.error?.hint);
+
+  useEffect(() => {
+    if (blocked) setAdvancedOpen(true);
+  }, [blocked]);
 
   const filenameBase = useMemo(
     () => (result?.title || result?.videoId || 'transcript').replace(/[^\w.-]+/g, '_'),
@@ -170,6 +186,27 @@ export default function TranscriptClient() {
         </Banner>
       ) : null}
 
+      {blocked ? (
+        <Banner tone="warn" title="The platform is refusing this server">
+          <p>
+            YouTube (and sometimes TikTok or Instagram) blocks requests coming from a datacenter IP and
+            asks it to prove it is not a bot. Nothing is broken on this side — the request never gets
+            through.
+          </p>
+          <p>Two ways past it:</p>
+          <ul>
+            <li>
+              Export cookies from a browser already signed in to that platform, in Netscape format, and
+              paste them into <strong>Cookies</strong> below. Cookies expire, so this needs redoing now and then.
+            </li>
+            <li>
+              Set <code>APIFY_TOKEN</code> on the server so the request is made by an external provider
+              from its own address pool instead.
+            </li>
+          </ul>
+        </Banner>
+      ) : null}
+
       {error ? (
         <Banner tone="error" title={error}>
           {hint ? <div className="hint">{hint}</div> : null}
@@ -248,7 +285,9 @@ export default function TranscriptClient() {
         </div>
       ) : null}
 
-      <details className="card">
+      {/* Opened for the caller when a platform block is detected: the fix is the
+          Cookies field inside, and leaving it collapsed hides the way out. */}
+      <details className="card" open={advancedOpen} onToggle={(e) => setAdvancedOpen(e.currentTarget.open)}>
         <summary><strong>Advanced</strong></summary>
         <div className="row" style={{ marginTop: '1rem' }}>
           <div className="field">
