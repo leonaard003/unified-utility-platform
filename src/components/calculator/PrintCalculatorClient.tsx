@@ -93,6 +93,49 @@ export default function PrintCalculatorClient() {
           </div>
           <div className="field"><label htmlFor="price">Paper cost per sheet</label><input id="price" type="number" value={pricePerSheet} onChange={(e) => setPricePerSheet(Number(e.target.value))} /></div>
         </div>
+
+        <div className="card sheet-card">
+          <h2 style={{ marginTop: 0 }}>Sheet layout</h2>
+          {!result.valid || fit === 0 ? (
+            <p className="hint">
+              {result.valid
+                ? 'The piece does not fit on this sheet in either orientation.'
+                : 'Enter a piece size and a sheet size to see the layout.'}
+            </p>
+          ) : (
+            <>
+              {drawable ? (
+                <svg
+                  className="sheet-preview"
+                  viewBox={`0 0 ${sheetMmW} ${sheetMmH}`}
+                  preserveAspectRatio="xMidYMid meet"
+                  role="img"
+                  aria-label={`${fit} pieces laid out ${best.cols} across and ${best.rows} down on the sheet`}
+                >
+                  <rect x={0} y={0} width={sheetMmW} height={sheetMmH} className="sheet-waste" />
+                  {pieces.map((cell) => (
+                    <rect
+                      key={`${cell.x}-${cell.y}`}
+                      x={cell.x}
+                      y={cell.y}
+                      width={best.pieceW}
+                      height={best.pieceH}
+                      className="sheet-piece"
+                    />
+                  ))}
+                  <rect x={0} y={0} width={sheetMmW} height={sheetMmH} className="sheet-outline" />
+                </svg>
+              ) : (
+                <p className="hint">{fit} pieces fit — too many to draw individually.</p>
+              )}
+              <p className="hint">
+                <strong>{fit} per sheet</strong> in {best.cols}×{best.rows}{' '}
+                {best.rotated ? 'rotated' : 'normal'} orientation. Shaded area is trim
+                ({Math.round(result.waste * 100)}%).
+              </p>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="card">
@@ -105,54 +148,11 @@ export default function PrintCalculatorClient() {
             </li>
           ))}
         </ul>
-        <p className="hint">Formula: sheets needed = ceil(quantity / best fit). This MVP estimates paper cost only; finishing, waste, ink, and labor are not included yet.</p>
-      </div>
-
-      <div className="card">
-        <h2 style={{ marginTop: 0 }}>Sheet layout</h2>
-        {!result.valid || fit === 0 ? (
-          <p className="hint">
-            {result.valid
-              ? 'The piece does not fit on this sheet in either orientation.'
-              : 'Enter a piece size and a sheet size to see the layout.'}
-          </p>
-        ) : (
-          <>
-            <p className="hint" style={{ margin: '0 0 0.6rem' }}>
-              Sheet {sheetW}×{sheetH} {unit} · piece {itemW}×{itemH} {unit} ·{' '}
-              <strong>{fit} per sheet</strong> in {best.cols}×{best.rows}{' '}
-              {best.rotated ? 'rotated' : 'normal'} orientation · {Math.round(result.waste * 100)}% trim
-            </p>
-            {drawable ? (
-              <svg
-                className="sheet-preview"
-                viewBox={`0 0 ${sheetMmW} ${sheetMmH}`}
-                preserveAspectRatio="xMidYMid meet"
-                role="img"
-                aria-label={`${fit} pieces laid out ${best.cols} across and ${best.rows} down on the sheet`}
-              >
-                <rect x={0} y={0} width={sheetMmW} height={sheetMmH} className="sheet-waste" />
-                {pieces.map((cell) => (
-                  <rect
-                    key={`${cell.x}-${cell.y}`}
-                    x={cell.x}
-                    y={cell.y}
-                    width={best.pieceW}
-                    height={best.pieceH}
-                    className="sheet-piece"
-                  />
-                ))}
-                <rect x={0} y={0} width={sheetMmW} height={sheetMmH} className="sheet-outline" />
-              </svg>
-            ) : (
-              <p className="hint">{fit} pieces fit — too many to draw individually.</p>
-            )}
-            <p className="hint">
-              Shaded area is trim. Pieces are placed in a single orientation; mixing orientations in the
-              leftover strip can sometimes yield more per sheet.
-            </p>
-          </>
-        )}
+        <p className="hint">
+          Formula: sheets needed = ceil(quantity / best fit). Pieces are placed in a single orientation;
+          mixing orientations in the leftover strip can sometimes yield more per sheet. This MVP estimates
+          paper cost only; finishing, waste, ink, and labor are not included yet.
+        </p>
       </div>
     </div>
   );

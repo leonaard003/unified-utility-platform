@@ -821,7 +821,7 @@ th {
 .sheet-preview {
   display: block;
   margin: 0 auto;
-  height: 400px;
+  height: 300px;
   width: auto;
   max-width: 100%;
   border: 1px solid var(--border);
@@ -846,4 +846,9 @@ th {
   stroke: var(--text);
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
+}
+
+.sheet-card {
+  display: flex;
+  flex-direction: column;
 }
